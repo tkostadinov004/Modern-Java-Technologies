@@ -16,6 +16,9 @@ public class GenresOverlapSimilarityCalculator implements SimilarityCalculator {
             throw new IllegalArgumentException("The second book cannot be null!");
         }
 
+        if (first.genres().isEmpty() && second.genres().isEmpty()) {
+            return 1;
+        }
         if (first.genres().isEmpty() || second.genres().isEmpty()) {
             return 0;
         }
@@ -23,6 +26,6 @@ public class GenresOverlapSimilarityCalculator implements SimilarityCalculator {
         List<String> genreIntersection = new ArrayList<>(first.genres());
         genreIntersection.retainAll(second.genres());
 
-        return genreIntersection.size() / Math.min(first.genres().size(), second.genres().size());
+        return genreIntersection.size() * 1.0 / Math.min(first.genres().size(), second.genres().size());
     }
 }

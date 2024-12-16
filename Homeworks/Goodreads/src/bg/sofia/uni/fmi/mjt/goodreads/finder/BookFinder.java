@@ -73,21 +73,20 @@ public class BookFinder implements BookFinderAPI {
             case MATCH_ALL ->
                     (Book book) -> keywords
                             .stream()
-                            .allMatch(genre -> tokenizer
-                                    .tokenize(book.description()).contains(genre));
+                            .allMatch(keyword ->
+                                    tokenizer.tokenize(book.description()).contains(keyword) ||
+                                    tokenizer.tokenize(book.title()).contains(keyword));
             case MATCH_ANY ->
                     (Book book) -> keywords
                             .stream()
-                            .anyMatch(genre -> tokenizer
-                                    .tokenize(book.description()).contains(genre));
+                            .anyMatch(keyword ->
+                                    tokenizer.tokenize(book.description()).contains(keyword) ||
+                                            tokenizer.tokenize(book.title()).contains(keyword));
         };
     }
 
     @Override
     public List<Book> searchByKeywords(Set<String> keywords, MatchOption option) {
-        if (keywords == null) {
-            throw new IllegalArgumentException("Keywords cannot be null!");
-        }
         Predicate<Book> keywordMatchCriteria = getKeywordCriteria(keywords, option);
 
         return books

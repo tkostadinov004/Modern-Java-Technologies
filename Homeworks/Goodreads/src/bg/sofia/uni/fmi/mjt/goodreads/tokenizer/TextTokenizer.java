@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TextTokenizer {
-
     private final Set<String> stopwords;
 
     public TextTokenizer(Reader stopwordsReader) {
@@ -21,10 +20,18 @@ public class TextTokenizer {
     }
 
     public List<String> tokenize(String input) {
+        if (input.isEmpty()) {
+            return List.of();
+        }
+
+        final String punctRegex = "\\p{Punct}";
+
         return Arrays.stream(input
-                .split(" "))
-                .filter(word -> !stopwords.contains(word))
-                .toList();
+                        .replaceAll(punctRegex, "")
+                        .toLowerCase()
+                        .split("[\\s]+"))
+                        .filter(word -> !stopwords.contains(word))
+                        .toList();
     }
 
     public Set<String> stopwords() {
