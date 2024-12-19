@@ -110,7 +110,7 @@ public class TFIDFSimilarityCalculatorTest {
         final double filteredDescriptionWordsCountFirst = 8;
 
         Map<String, Double> expectedTFFirst = Map.of("ground", 1 / filteredDescriptionWordsCountFirst, "love", 2 / filteredDescriptionWordsCountFirst, "ring", 1 / filteredDescriptionWordsCountFirst, "hobbit", 3 / filteredDescriptionWordsCountFirst, "generations", 1 / filteredDescriptionWordsCountFirst);
-        Map<String, Double> expectedIDFFirst = Map.of("ground", Math.log(booksCount / 1), "love", Math.log(booksCount / 2), "ring", Math.log(booksCount / 3), "hobbit", Math.log(booksCount / 3), "generations", Math.log(booksCount / 2));
+        Map<String, Double> expectedIDFFirst = Map.of("ground", Math.log10(booksCount / 1), "love", Math.log10(booksCount / 2), "ring", Math.log10(booksCount / 3), "hobbit", Math.log10(booksCount / 3), "generations", Math.log10(booksCount / 2));
 
         Map<String, Double> expectedTFIDFFirst = Map.of("ground", expectedTFFirst.get("ground") * expectedIDFFirst.get("ground"),
                 "love", expectedTFFirst.get("love") * expectedIDFFirst.get("love"),
@@ -121,7 +121,7 @@ public class TFIDFSimilarityCalculatorTest {
         final double filteredDescriptionWordsCountSecond = 8;
 
         Map<String, Double> expectedTFSecond = Map.of("story", 1 / filteredDescriptionWordsCountSecond, "love", 1 / filteredDescriptionWordsCountSecond, "brave", 1 / filteredDescriptionWordsCountSecond, "hobbit", 2 / filteredDescriptionWordsCountSecond, "ring", 1 / filteredDescriptionWordsCountSecond, "thousands", 1 / filteredDescriptionWordsCountSecond, "generations", 1 / filteredDescriptionWordsCountSecond);
-        Map<String, Double> expectedIDFSecond = Map.of("story", Math.log(booksCount / 2), "love", Math.log(booksCount / 2), "brave", Math.log(booksCount / 1), "hobbit", Math.log(booksCount / 3), "ring", Math.log(booksCount / 3), "thousands", Math.log(booksCount / 2), "generations", Math.log(booksCount / 2));
+        Map<String, Double> expectedIDFSecond = Map.of("story", Math.log10(booksCount / 2), "love", Math.log10(booksCount / 2), "brave", Math.log10(booksCount / 1), "hobbit", Math.log10(booksCount / 3), "ring", Math.log10(booksCount / 3), "thousands", Math.log10(booksCount / 2), "generations", Math.log10(booksCount / 2));
         Map<String, Double> expectedTFIDFSecond = Map.of("story", expectedTFSecond.get("story") * expectedIDFSecond.get("story"),
                 "love", expectedTFSecond.get("love") * expectedIDFSecond.get("love"),
                 "brave", expectedTFSecond.get("brave") * expectedIDFSecond.get("brave"),
@@ -167,7 +167,7 @@ public class TFIDFSimilarityCalculatorTest {
         Book reference = new Book("", "", "",
                 "The ground love ring hobbit generations", List.of(), 0, 0, "");
         final double booksCount = books.size();
-        Map<String, Double> expected = Map.of("ground", Math.log(booksCount / 1), "love", Math.log(booksCount / 2), "ring", Math.log(booksCount / 3), "hobbit", Math.log(booksCount / 3), "generations", Math.log(booksCount / 2));
+        Map<String, Double> expected = Map.of("ground", Math.log10(booksCount / 1), "love", Math.log10(booksCount / 2), "ring", Math.log10(booksCount / 3), "hobbit", Math.log10(booksCount / 3), "generations", Math.log10(booksCount / 2));
         assertEquals(expected, calculator.computeIDF(reference));
     }
 
@@ -188,7 +188,7 @@ public class TFIDFSimilarityCalculatorTest {
         final double booksCount = books.size();
         final double filteredDescriptionWordsCount = 8;
         Map<String, Double> expectedTF = Map.of("ground", 1 / filteredDescriptionWordsCount, "love", 2 / filteredDescriptionWordsCount, "ring", 1 / filteredDescriptionWordsCount, "hobbit", 3 / filteredDescriptionWordsCount, "generations", 1 / filteredDescriptionWordsCount);
-        Map<String, Double> expectedIDF = Map.of("ground", Math.log(booksCount / 1), "love", Math.log(booksCount / 2), "ring", Math.log(booksCount / 3), "hobbit", Math.log(booksCount / 3), "generations", Math.log(booksCount / 2));
+        Map<String, Double> expectedIDF = Map.of("ground", Math.log10(booksCount / 1), "love", Math.log10(booksCount / 2), "ring", Math.log10(booksCount / 3), "hobbit", Math.log10(booksCount / 3), "generations", Math.log10(booksCount / 2));
 
         Map<String, Double> expectedTFIDF = Map.of("ground", expectedTF.get("ground") * expectedIDF.get("ground"),
                 "love", expectedTF.get("love") * expectedIDF.get("love"),

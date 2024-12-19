@@ -6,8 +6,8 @@ import bg.sofia.uni.fmi.mjt.goodreads.recommender.similaritycalculator.Similarit
 import java.util.Comparator;
 
 public class BookSimilarityComparator implements Comparator<Book> {
-    private Book origin;
-    private SimilarityCalculator calculator;
+    private final Book origin;
+    private final SimilarityCalculator calculator;
 
     public BookSimilarityComparator(Book origin, SimilarityCalculator calculator) {
         this.origin = origin;

@@ -4,10 +4,9 @@ import bg.sofia.uni.fmi.mjt.goodreads.book.Book;
 import bg.sofia.uni.fmi.mjt.goodreads.recommender.similaritycalculator.SimilarityCalculator;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class CompositeSimilarityCalculator implements SimilarityCalculator {
-    private Map<SimilarityCalculator, Double> similarityCalculatorMap;
+    private final Map<SimilarityCalculator, Double> similarityCalculatorMap;
 
     public CompositeSimilarityCalculator(Map<SimilarityCalculator, Double> similarityCalculatorMap) {
         this.similarityCalculatorMap = similarityCalculatorMap;
@@ -26,6 +25,7 @@ public class CompositeSimilarityCalculator implements SimilarityCalculator {
                 .entrySet()
                 .stream()
                 .map(entry -> entry.getKey().calculateSimilarity(first, second) * entry.getValue())
-                .collect(Collectors.summingDouble(Double::doubleValue));
+                .mapToDouble(Double::doubleValue)
+                .sum();
     }
 }

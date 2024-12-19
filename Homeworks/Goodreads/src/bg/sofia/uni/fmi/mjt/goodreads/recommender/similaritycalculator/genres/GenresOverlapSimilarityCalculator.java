@@ -18,8 +18,7 @@ public class GenresOverlapSimilarityCalculator implements SimilarityCalculator {
 
         if (first.genres().isEmpty() && second.genres().isEmpty()) {
             return 1;
-        }
-        if (first.genres().isEmpty() || second.genres().isEmpty()) {
+        } else if (first.genres().isEmpty() || second.genres().isEmpty()) {
             return 0;
         }
 

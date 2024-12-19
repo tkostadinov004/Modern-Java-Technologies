@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.goodreads.recommender;
 
 import bg.sofia.uni.fmi.mjt.goodreads.book.Book;
 import bg.sofia.uni.fmi.mjt.goodreads.recommender.similaritycalculator.SimilarityCalculator;
+import bg.sofia.uni.fmi.mjt.goodreads.recommender.similaritycalculator.comparator.BookSimilarityComparator;
 import bg.sofia.uni.fmi.mjt.goodreads.recommender.similaritycalculator.descriptions.TFIDFSimilarityCalculator;
 import bg.sofia.uni.fmi.mjt.goodreads.recommender.similaritycalculator.genres.GenresOverlapSimilarityCalculator;
 import bg.sofia.uni.fmi.mjt.goodreads.tokenizer.TextTokenizer;
@@ -11,10 +12,14 @@ import org.junit.jupiter.api.Test;
 import java.io.StringReader;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BookRecommenderTest {
     private static Book[] referenceBooks = new Book[7];
@@ -80,24 +85,38 @@ public class BookRecommenderTest {
     }
     @Test
     public void recommendBooksBasedOnGenreReturnsSorted() {
-        BookRecommenderAPI bookRecommender = new BookRecommender(books, genresCalculator);
         Book origin = new Book("1235", "Hobbit's Bizarre Adventure", "John Smith",
                 "The story of the love between a brave hobbit, a ring, and thousands of hobbit generations",
-                List.of("Adventure", "Fantasy", "Romance", "High Fantasy"), 4.52, 1234356,
+                List.of("Adventure", "Fantasy", "Romance", "High Fantasy", "Classics"), 4.52, 1234356,
                 "goodreads.com/test1");
+        List<Book> bookList = books.stream().toList();
 
-       /*
-        LinkedHashMap<Book, Double> expected = new LinkedHashMap<>();
-        expected.put()
+        SimilarityCalculator mockCalculator = mock();
+        when(mockCalculator.calculateSimilarity(bookList.get(0), origin))
+                .thenReturn(0.4);
+        when(mockCalculator.calculateSimilarity(bookList.get(1), origin))
+                .thenReturn(0.8);
+        when(mockCalculator.calculateSimilarity(bookList.get(2), origin))
+                .thenReturn(0.3);
+        when(mockCalculator.calculateSimilarity(bookList.get(3), origin))
+                .thenReturn(0.1);
+        when(mockCalculator.calculateSimilarity(bookList.get(4), origin))
+                .thenReturn(0.7);
+        when(mockCalculator.calculateSimilarity(bookList.get(5), origin))
+                .thenReturn(0.2);
+        when(mockCalculator.calculateSimilarity(bookList.get(6), origin))
+                .thenReturn(0.0);
 
-        SortedMap<Book, Double> actual = bookRecommender.recommendBooks(origin, books.size());
+        BookRecommenderAPI bookRecommender = new BookRecommender(books, mockCalculator);
+        SortedMap<Book, Double> actualResult = bookRecommender.recommendBooks(origin, bookList.size());
+        int[] expectedIndicesOrder = {1, 4, 0, 2, 5, 3, 6};
+        int currentIndex = 0;
 
-        assertThrows(IllegalArgumentException.class,
-                () -> bookRecommender.recommendBooks(reference, 0),
-                "recommendBooks() should throw on non-positive count");
-        assertThrows(IllegalArgumentException.class,
-                () -> bookRecommender.recommendBooks(reference, -1),
-                "recommendBooks() should throw on non-positive count");
-        */
+        while (!actualResult.isEmpty()) {
+            Map.Entry<Book, Double> current = actualResult.pollFirstEntry();
+            assertEquals(bookList.get(expectedIndicesOrder[currentIndex]), current.getKey());
+            assertEquals(mockCalculator.calculateSimilarity(bookList.get(expectedIndicesOrder[currentIndex]), origin), current.getValue());
+            currentIndex++;
+        }
     }
 }

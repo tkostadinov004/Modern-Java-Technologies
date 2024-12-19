@@ -13,8 +13,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TFIDFSimilarityCalculator implements SimilarityCalculator {
-    private Set<Book> books;
-    private TextTokenizer tokenizer;
+    private final Set<Book> books;
+    private final TextTokenizer tokenizer;
 
     public TFIDFSimilarityCalculator(Set<Book> books, TextTokenizer tokenizer) {
         this.books = books;
@@ -45,7 +45,7 @@ public class TFIDFSimilarityCalculator implements SimilarityCalculator {
 
         return tf.entrySet()
                 .stream()
-                .collect(Collectors.toMap(e -> e.getKey(),
+                .collect(Collectors.toMap(Map.Entry::getKey,
                         e -> e.getValue() * idf.get(e.getKey())));
     }
 
@@ -56,7 +56,7 @@ public class TFIDFSimilarityCalculator implements SimilarityCalculator {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(e -> e.getKey(),
+                .collect(Collectors.toMap(Map.Entry::getKey,
                         e -> (double)e.getValue() / words.size()));
     }
 
@@ -67,8 +67,8 @@ public class TFIDFSimilarityCalculator implements SimilarityCalculator {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(e -> e.getKey(),
-                        e -> Math.log((double)books.size() / books
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> Math.log10((double)books.size() / books
                                 .stream()
                                 .filter(b -> tokenizer.tokenize(b.description()).contains(e.getKey()))
                                 .toList()

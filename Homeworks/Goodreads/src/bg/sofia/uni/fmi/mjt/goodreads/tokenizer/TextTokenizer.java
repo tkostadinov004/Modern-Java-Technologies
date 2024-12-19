@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 public class TextTokenizer {
     private final Set<String> stopwords;
+    private static final String PUNCT_REGEX = "\\p{Punct}";
+    private static final String WHITESPACE_REGEX = "[\\s]+";
 
     public TextTokenizer(Reader stopwordsReader) {
         try (var br = new BufferedReader(stopwordsReader)) {
@@ -24,12 +26,10 @@ public class TextTokenizer {
             return List.of();
         }
 
-        final String punctRegex = "\\p{Punct}";
-
         return Arrays.stream(input
-                        .replaceAll(punctRegex, "")
+                        .replaceAll(PUNCT_REGEX, "")
                         .toLowerCase()
-                        .split("[\\s]+"))
+                        .split(WHITESPACE_REGEX))
                         .filter(word -> !stopwords.contains(word))
                         .toList();
     }

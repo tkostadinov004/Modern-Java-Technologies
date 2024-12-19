@@ -9,8 +9,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class BookFinder implements BookFinderAPI {
-    private Set<Book> books;
-    private TextTokenizer tokenizer;
+    private final Set<Book> books;
+    private final TextTokenizer tokenizer;
 
     public BookFinder(Set<Book> books, TextTokenizer tokenizer) {
         this.books = books;
@@ -19,6 +19,15 @@ public class BookFinder implements BookFinderAPI {
 
     public Set<Book> allBooks() {
         return books;
+    }
+
+    @Override
+    public Set<String> allGenres() {
+        return books
+                .stream()
+                .map(Book::genres)
+                .flatMap(genres -> genres.stream())
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -31,15 +40,6 @@ public class BookFinder implements BookFinderAPI {
                 .stream()
                 .filter(book -> book.author().equals(authorName))
                 .toList();
-    }
-
-    @Override
-    public Set<String> allGenres() {
-        return books
-                .stream()
-                .map(book -> book.genres())
-                .flatMap(genres -> genres.stream())
-                .collect(Collectors.toSet());
     }
 
     private Predicate<Book> getGenreCriteria(Set<String> genres, MatchOption option) {

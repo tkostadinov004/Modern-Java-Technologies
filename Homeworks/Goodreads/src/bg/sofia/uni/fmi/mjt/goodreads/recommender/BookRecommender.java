@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class BookRecommender implements BookRecommenderAPI {
-    private Set<Book> initialBooks;
-    private SimilarityCalculator calculator;
+    private final Set<Book> initialBooks;
+    private final SimilarityCalculator calculator;
 
     public BookRecommender(Set<Book> initialBooks, SimilarityCalculator calculator) {
         this.initialBooks = initialBooks;
