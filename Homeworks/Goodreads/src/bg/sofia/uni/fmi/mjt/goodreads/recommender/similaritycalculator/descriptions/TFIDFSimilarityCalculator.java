@@ -40,6 +40,10 @@ public class TFIDFSimilarityCalculator implements SimilarityCalculator {
     }
 
     public Map<String, Double> computeTFIDF(Book book) {
+        if (book == null) {
+            throw new IllegalArgumentException("Book cannot be null!");
+        }
+
         Map<String, Double> tf = computeTF(book);
         Map<String, Double> idf = computeIDF(book);
 
@@ -50,6 +54,10 @@ public class TFIDFSimilarityCalculator implements SimilarityCalculator {
     }
 
     public Map<String, Double> computeTF(Book book) {
+        if (book == null) {
+            throw new IllegalArgumentException("Book cannot be null!");
+        }
+
         List<String> words = tokenizer.tokenize(book.description());
         return words
                 .stream()
@@ -61,6 +69,10 @@ public class TFIDFSimilarityCalculator implements SimilarityCalculator {
     }
 
     public Map<String, Double> computeIDF(Book book) {
+        if (book == null) {
+            throw new IllegalArgumentException("Book cannot be null!");
+        }
+
         List<String> words = tokenizer.tokenize(book.description());
         return words
                 .stream()

@@ -33,9 +33,11 @@ public class BookRecommender implements BookRecommenderAPI {
 
         return initialBooks
                 .stream()
+                .sorted(new BookSimilarityComparator(origin, calculator).reversed())
+                .limit(maxN)
                 .collect(Collectors.toMap((Book book) -> book,
                         book -> calculator.calculateSimilarity(book, origin),
-                        (e1, e2) -> e1,
+                        (e1, _) -> e1,
                         treeMapSupplier));
     }
 }

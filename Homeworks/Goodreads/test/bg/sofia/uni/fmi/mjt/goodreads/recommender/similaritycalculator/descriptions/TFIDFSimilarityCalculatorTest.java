@@ -51,11 +51,10 @@ public class TFIDFSimilarityCalculatorTest {
         referenceBooks[6] = new Book("", "", "",
                 "The story of the love between a brave hobbit, a ring, and thousands of hobbit generations", List.of(), 0, 0, "");
 
-        String stopwords = "a\nabout\nabove\nafter\nagain\nagainst\nall\nam\nan\nand\nany\nare\naren't\nas\nat\nbe\nbecause\nbeen\nbefore\nbeing\nbelow\nbetween\nboth\nbut\nby\ncan't\ncannot\ncould\ncouldn't\ndid\ndidn't\ndo\ndoes\ndoesn't\ndoing\ndon't\ndown\nduring\neach\nfew\nfor\nfrom\nfurther\nhad\nhadn't\nhas\nhasn't\nhave\nhaven't\nhaving\nhe\nhe'd\nhe'll\nhe's\nher\nhere\nhere's\nhers\nherself\nhim\nhimself\nhis\nhow\nhow's\ni\ni'd\ni'll\ni'm\ni've\nif\nin\ninto\nis\nisn't\nit\nit's\nits\nitself\nlet's\nme\nmore\nmost\nmustn't\nmy\nmyself\nno\nnor\nnot\nof\noff\non\nonce\nonly\nor\nother\nought\nour\nours\nourselves\nout\nover\nown\nsame\nshan't\nshe\nshe'd\nshe'll\nshe's\nshould\nshouldn't\nso\nsome\nsuch\nthan\nthat\nthat's\nthe\ntheir\ntheirs\nthem\nthemselves\nthen\nthere\nthere's\nthese\nthey\nthey'd\nthey'll\nthey're\nthey've\nthis\nthose\nthrough\nto\ntoo\nunder\nuntil\nup\nvery\nwas\nwasn't\nwe\nwe'd\nwe'll\nwe're\nwe've\nwere\nweren't\nwhat\nwhat's\nwhen\nwhen's\nwhere\nwhere's\nwhich\nwhile\nwho\nwho's\nwhom\nwhy\nwhy's\nwith\nwon't\nwould\nwouldn't\nyou\nyou'd\nyou'll\nyou're\nyou've\nyour\nyours\nyourself\nyourselves\n";
+        final String stopwords = "a\nabout\nabove\nafter\nagain\nagainst\nall\nam\nan\nand\nany\nare\narent\nas\nat\nbe\nbecause\nbeen\nbefore\nbeing\nbelow\nbetween\nboth\nbut\nby\ncant\ncannot\ncould\ncouldnt\ndid\ndidnt\ndo\ndoes\ndoesnt\ndoing\ndont\ndown\nduring\neach\nfew\nfor\nfrom\nfurther\nhad\nhadnt\nhas\nhasnt\nhave\nhavent\nhaving\nhe\nhed\nhell\nhes\nher\nhere\nheres\nhers\nherself\nhim\nhimself\nhis\nhow\nhows\ni\nid\nill\nim\nive\nif\nin\ninto\nis\nisnt\nit\nits\nits\nitself\nlets\nme\nmore\nmost\nmustnt\nmy\nmyself\nno\nnor\nnot\nof\noff\non\nonce\nonly\nor\nother\nought\nour\nours\nourselves\nout\nover\nown\nsame\nshant\nshe\nshed\nshell\nshes\nshould\nshouldnt\nso\nsome\nsuch\nthan\nthat\nthats\nthe\ntheir\ntheirs\nthem\nthemselves\nthen\nthere\ntheres\nthese\nthey\ntheyd\ntheyll\ntheyre\ntheyve\nthis\nthose\nthrough\nto\ntoo\nunder\nuntil\nup\nvery\nwas\nwasnt\nwe\nwed\nwell\nwere\nweve\nwere\nwerent\nwhat\nwhats\nwhen\nwhens\nwhere\nwheres\nwhich\nwhile\nwho\nwhos\nwhom\nwhy\nwhys\nwith\nwont\nwould\nwouldnt\nyou\nyoud\nyoull\nyoure\nyouve\nyour\nyours\nyourself\nyourselves\n";
 
         books = Set.of(referenceBooks);
         tokenizer = new TextTokenizer(new StringReader(stopwords));
-
     }
 
     @Test
@@ -130,7 +129,9 @@ public class TFIDFSimilarityCalculatorTest {
                 "thousands", expectedTFSecond.get("thousands") * expectedIDFSecond.get("thousands"),
                 "generations", expectedTFSecond.get("generations") * expectedIDFSecond.get("generations"));
 
-        assertEquals(cosineSimilarity(expectedTFIDFFirst, expectedTFIDFSecond), calculator.calculateSimilarity(book1, book2));
+        assertEquals(cosineSimilarity(expectedTFIDFFirst, expectedTFIDFSecond),
+                calculator.calculateSimilarity(book1, book2),
+                "The similarity of two books should be calculated by multiplying their TF and IDF scores");
     }
 
     @Test
@@ -149,7 +150,9 @@ public class TFIDFSimilarityCalculatorTest {
                 "The book that shows us the book that exists, regardless of their genre or genre preference of the reader", List.of(), 0, 0, "");
         final double filteredCount = 10;
         Map<String, Double> expected = Map.of("book", 2 / filteredCount, "shows", 1 / filteredCount, "exists", 1 / filteredCount, "regardless", 1 / filteredCount, "genre", 2 / filteredCount, "preference", 1 / filteredCount, "reader", 1/ filteredCount, "us", 1/ filteredCount);
-        assertEquals(expected, calculator.computeTF(reference));
+        assertEquals(expected,
+                calculator.computeTF(reference),
+                "TF should be calculated by dividing the occurrence of each word in the document by the total count of non-stopwords");
     }
 
     @Test
@@ -168,7 +171,9 @@ public class TFIDFSimilarityCalculatorTest {
                 "The ground love ring hobbit generations", List.of(), 0, 0, "");
         final double booksCount = books.size();
         Map<String, Double> expected = Map.of("ground", Math.log10(booksCount / 1), "love", Math.log10(booksCount / 2), "ring", Math.log10(booksCount / 3), "hobbit", Math.log10(booksCount / 3), "generations", Math.log10(booksCount / 2));
-        assertEquals(expected, calculator.computeIDF(reference));
+        assertEquals(expected,
+                calculator.computeIDF(reference),
+                "IDF should be calculated by taking the logarithm of the amount of books in which a given word appears by the total amount of books");
     }
 
     @Test
@@ -195,6 +200,32 @@ public class TFIDFSimilarityCalculatorTest {
                 "hobbit", expectedTF.get("hobbit") * expectedIDF.get("hobbit"),
                 "ring", expectedTF.get("ring") * expectedIDF.get("ring"),
                 "generations", expectedTF.get("generations") * expectedIDF.get("generations"));
-        assertEquals(expectedTFIDF, calculator.computeTFIDF(reference));
+        assertEquals(expectedTFIDF,
+                calculator.computeTFIDF(reference),
+                "TFIDF should be calculated by multiplying the TF and IDF scores of each word");
+    }
+
+    @Test
+    public void computeTFThrowsOnNullBook() {
+        TFIDFSimilarityCalculator calculator = new TFIDFSimilarityCalculator(books, tokenizer);
+        assertThrows(IllegalArgumentException.class,
+                () -> calculator.computeTF(null),
+                "computeTF() should throw on null book");
+    }
+
+    @Test
+    public void computeIDFThrowsOnNullBook() {
+        TFIDFSimilarityCalculator calculator = new TFIDFSimilarityCalculator(books, tokenizer);
+        assertThrows(IllegalArgumentException.class,
+                () -> calculator.computeIDF(null),
+                "computeIDF() should throw on null book");
+    }
+
+    @Test
+    public void computeTFIDFThrowsOnNullBook() {
+        TFIDFSimilarityCalculator calculator = new TFIDFSimilarityCalculator(books, tokenizer);
+        assertThrows(IllegalArgumentException.class,
+                () -> calculator.computeTFIDF(null),
+                "computeTFIDF() should throw on null book");
     }
 }

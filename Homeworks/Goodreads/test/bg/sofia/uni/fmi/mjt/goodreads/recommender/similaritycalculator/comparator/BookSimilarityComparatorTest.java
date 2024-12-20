@@ -30,10 +30,14 @@ public class BookSimilarityComparatorTest {
         when(calculator.calculateSimilarity(book2, origin))
                 .thenReturn(0.8);
 
-        assertTrue(comparator.compare(book1, book2) > 0);
-        assertTrue(comparator.compare(book2, book1) < 0);
-        assertTrue(comparator.compare(book1, book1) == 0);
-        assertTrue(comparator.compare(book2, book2) == 0);
+        assertTrue(comparator.compare(book1, book2) > 0,
+                "A book with a higher similarity score to origin should be greater than a book with a lower similarity score");
+        assertTrue(comparator.compare(book2, book1) < 0,
+                "A book with a lower similarity score to origin should be greater than a book with a higher similarity score");
+        assertTrue(comparator.compare(book1, book1) == 0,
+                "If a book is compared to itself, it should return that they're equal");
+        assertTrue(comparator.compare(book2, book2) == 0,
+                "If a book is compared to itself, it should return that they're equal");
 
     }
 }

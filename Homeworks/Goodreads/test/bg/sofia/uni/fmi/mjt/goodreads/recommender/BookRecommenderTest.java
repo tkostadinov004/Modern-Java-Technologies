@@ -56,7 +56,7 @@ public class BookRecommenderTest {
         referenceBooks[6] = new Book("", "", "",
                 "The story of the love between a brave hobbit, a ring, and thousands of hobbit generations", List.of(), 0, 0, "");
 
-        String stopwords = "a\nabout\nabove\nafter\nagain\nagainst\nall\nam\nan\nand\nany\nare\naren't\nas\nat\nbe\nbecause\nbeen\nbefore\nbeing\nbelow\nbetween\nboth\nbut\nby\ncan't\ncannot\ncould\ncouldn't\ndid\ndidn't\ndo\ndoes\ndoesn't\ndoing\ndon't\ndown\nduring\neach\nfew\nfor\nfrom\nfurther\nhad\nhadn't\nhas\nhasn't\nhave\nhaven't\nhaving\nhe\nhe'd\nhe'll\nhe's\nher\nhere\nhere's\nhers\nherself\nhim\nhimself\nhis\nhow\nhow's\ni\ni'd\ni'll\ni'm\ni've\nif\nin\ninto\nis\nisn't\nit\nit's\nits\nitself\nlet's\nme\nmore\nmost\nmustn't\nmy\nmyself\nno\nnor\nnot\nof\noff\non\nonce\nonly\nor\nother\nought\nour\nours\nourselves\nout\nover\nown\nsame\nshan't\nshe\nshe'd\nshe'll\nshe's\nshould\nshouldn't\nso\nsome\nsuch\nthan\nthat\nthat's\nthe\ntheir\ntheirs\nthem\nthemselves\nthen\nthere\nthere's\nthese\nthey\nthey'd\nthey'll\nthey're\nthey've\nthis\nthose\nthrough\nto\ntoo\nunder\nuntil\nup\nvery\nwas\nwasn't\nwe\nwe'd\nwe'll\nwe're\nwe've\nwere\nweren't\nwhat\nwhat's\nwhen\nwhen's\nwhere\nwhere's\nwhich\nwhile\nwho\nwho's\nwhom\nwhy\nwhy's\nwith\nwon't\nwould\nwouldn't\nyou\nyou'd\nyou'll\nyou're\nyou've\nyour\nyours\nyourself\nyourselves\n";
+        String stopwords = "a\nabout\nabove\nafter\nagain\nagainst\nall\nam\nan\nand\nany\nare\narent\nas\nat\nbe\nbecause\nbeen\nbefore\nbeing\nbelow\nbetween\nboth\nbut\nby\ncant\ncannot\ncould\ncouldnt\ndid\ndidnt\ndo\ndoes\ndoesnt\ndoing\ndont\ndown\nduring\neach\nfew\nfor\nfrom\nfurther\nhad\nhadnt\nhas\nhasnt\nhave\nhavent\nhaving\nhe\nhed\nhell\nhes\nher\nhere\nheres\nhers\nherself\nhim\nhimself\nhis\nhow\nhows\ni\nid\nill\nim\nive\nif\nin\ninto\nis\nisnt\nit\nits\nits\nitself\nlets\nme\nmore\nmost\nmustnt\nmy\nmyself\nno\nnor\nnot\nof\noff\non\nonce\nonly\nor\nother\nought\nour\nours\nourselves\nout\nover\nown\nsame\nshant\nshe\nshed\nshell\nshes\nshould\nshouldnt\nso\nsome\nsuch\nthan\nthat\nthats\nthe\ntheir\ntheirs\nthem\nthemselves\nthen\nthere\ntheres\nthese\nthey\ntheyd\ntheyll\ntheyre\ntheyve\nthis\nthose\nthrough\nto\ntoo\nunder\nuntil\nup\nvery\nwas\nwasnt\nwe\nwed\nwell\nwere\nweve\nwere\nwerent\nwhat\nwhats\nwhen\nwhens\nwhere\nwheres\nwhich\nwhile\nwho\nwhos\nwhom\nwhy\nwhys\nwith\nwont\nwould\nwouldnt\nyou\nyoud\nyoull\nyoure\nyouve\nyour\nyours\nyourself\nyourselves\n";
 
         books = Set.of(referenceBooks);
         genresCalculator = new GenresOverlapSimilarityCalculator();
@@ -84,7 +84,7 @@ public class BookRecommenderTest {
                 "recommendBooks() should throw on non-positive count");
     }
     @Test
-    public void recommendBooksBasedOnGenreReturnsSorted() {
+    public void recommendBooksTop4ReturnsSorted() {
         Book origin = new Book("1235", "Hobbit's Bizarre Adventure", "John Smith",
                 "The story of the love between a brave hobbit, a ring, and thousands of hobbit generations",
                 List.of("Adventure", "Fantasy", "Romance", "High Fantasy", "Classics"), 4.52, 1234356,
@@ -108,14 +108,23 @@ public class BookRecommenderTest {
                 .thenReturn(0.0);
 
         BookRecommenderAPI bookRecommender = new BookRecommender(books, mockCalculator);
-        SortedMap<Book, Double> actualResult = bookRecommender.recommendBooks(origin, bookList.size());
-        int[] expectedIndicesOrder = {1, 4, 0, 2, 5, 3, 6};
+        final int maxN = 4;
+        SortedMap<Book, Double> actualResult = bookRecommender.recommendBooks(origin, maxN);
+        assertEquals(maxN,
+                actualResult.size(),
+                "The returned amount of books should be exactly equal to the given");
+
+        final int[] expectedIndicesOrder = {1, 4, 0, 2};
         int currentIndex = 0;
 
         while (!actualResult.isEmpty()) {
             Map.Entry<Book, Double> current = actualResult.pollFirstEntry();
-            assertEquals(bookList.get(expectedIndicesOrder[currentIndex]), current.getKey());
-            assertEquals(mockCalculator.calculateSimilarity(bookList.get(expectedIndicesOrder[currentIndex]), origin), current.getValue());
+            assertEquals(bookList.get(expectedIndicesOrder[currentIndex]),
+                    current.getKey(),
+                    "Result map should be sorted by similarity to the origin book in descending order");
+            assertEquals(mockCalculator.calculateSimilarity(bookList.get(expectedIndicesOrder[currentIndex]), origin),
+                    current.getValue(),
+                    "Result map should be sorted by similarity to the origin book in descending order");
             currentIndex++;
         }
     }

@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class TextTokenizer {
     private final Set<String> stopwords;
-    private static final String PUNCT_REGEX = "\\p{Punct}";
+    private static final String PUNCT_REGEX = "\\p{Punct}"; //"\\p{Punct}&&[^\']"
     private static final String WHITESPACE_REGEX = "[\\s]+";
 
     public TextTokenizer(Reader stopwordsReader) {

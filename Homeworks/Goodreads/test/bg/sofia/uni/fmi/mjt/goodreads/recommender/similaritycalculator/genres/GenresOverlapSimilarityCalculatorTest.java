@@ -47,7 +47,9 @@ public class GenresOverlapSimilarityCalculatorTest {
         int lesserSize = Math.min(book1.genres().size(), book2.genres().size());
         double expectedOverlapCoefficient = intersection.size() * 1.0 / lesserSize;
 
-        assertEquals(expectedOverlapCoefficient, calculator.calculateSimilarity(book1, book2));
+        assertEquals(expectedOverlapCoefficient,
+                calculator.calculateSimilarity(book1, book2),
+                "Two books should be compared by the similarity in their respective genre sets.");
     }
 
     @Test
@@ -62,8 +64,12 @@ public class GenresOverlapSimilarityCalculatorTest {
                 List.of("Fantasy", "Classics", "Fiction", "Adventure", "Science Fiction Fantasy", "High Fantasy", "Epic Fantasy"),
                 4.34, 722312,"goodreads.com/something4");
 
-        assertEquals(0, calculator.calculateSimilarity(book1, book2));
-        assertEquals(0, calculator.calculateSimilarity(book2, book1));
+        assertEquals(0,
+                calculator.calculateSimilarity(book1, book2),
+                "Two books cannot be similar if one of the books doesn't have any genres");
+        assertEquals(0,
+                calculator.calculateSimilarity(book2, book1),
+                "Two books cannot be similar if one of the books doesn't have any genres");
     }
 
     @Test
@@ -78,6 +84,8 @@ public class GenresOverlapSimilarityCalculatorTest {
                 List.of(),
                 4.34, 722312,"goodreads.com/something4");
 
-        assertEquals(1, calculator.calculateSimilarity(book1, book2));
+        assertEquals(1,
+                calculator.calculateSimilarity(book1, book2),
+                "Two books should be completely similar if both of them don't have any genres");
     }
 }

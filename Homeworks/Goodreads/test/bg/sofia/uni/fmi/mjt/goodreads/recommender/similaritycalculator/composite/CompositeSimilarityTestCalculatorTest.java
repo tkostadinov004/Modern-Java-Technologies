@@ -65,9 +65,11 @@ public class CompositeSimilarityTestCalculatorTest {
     @Test
     public void calculateSimilarityCalculatesCorrectly() {
         SimilarityCalculator calculator = new CompositeSimilarityCalculator(weights);
-        double genresWeighted = (6.0 / 7) * 0.55;
-        double tfidfWeighted = 0.2346 * 0.45;
+        final double genresWeighted = (6.0 / 7) * 0.55;
+        final double tfidfWeighted = 0.2346 * 0.45;
 
-        assertEquals(genresWeighted + tfidfWeighted, calculator.calculateSimilarity(book1, book2));
+        assertEquals(genresWeighted + tfidfWeighted,
+                calculator.calculateSimilarity(book1, book2),
+                "The composite similarity of two books should be the sum of their similarities based on all similarity calculators");
     }
 }
