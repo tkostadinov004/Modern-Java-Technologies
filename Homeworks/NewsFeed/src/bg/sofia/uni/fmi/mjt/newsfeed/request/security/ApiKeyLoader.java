@@ -1,4 +1,4 @@
-package bg.sofia.uni.fmi.mjt.newsfeed.server.request.secure;
+package bg.sofia.uni.fmi.mjt.newsfeed.request.security;
 
 import java.io.FileInputStream;
 import java.io.IOException;

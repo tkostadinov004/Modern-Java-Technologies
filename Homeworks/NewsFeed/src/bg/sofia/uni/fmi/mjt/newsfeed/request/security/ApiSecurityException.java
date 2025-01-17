@@ -1,4 +1,4 @@
-package bg.sofia.uni.fmi.mjt.newsfeed.server.request.secure;
+package bg.sofia.uni.fmi.mjt.newsfeed.request.security;
 
 public class ApiSecurityException extends RuntimeException {
     public ApiSecurityException(String message) {
