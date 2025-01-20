@@ -2,11 +2,25 @@ package bg.sofia.uni.fmi.mjt.newsfeed.response.pagination;
 
 import bg.sofia.uni.fmi.mjt.newsfeed.news.NewsArticle;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class NewsResponsePage implements Page<NewsArticle> {
     private int totalResults;
     private Set<NewsArticle> articles;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NewsResponsePage that = (NewsResponsePage) o;
+        return totalResults == that.totalResults && Objects.equals(articles, that.articles);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(totalResults, articles);
+    }
 
     public NewsResponsePage(int totalResults, Set<NewsArticle> articles) {
         this.totalResults = totalResults;
@@ -17,25 +31,7 @@ public class NewsResponsePage implements Page<NewsArticle> {
         return totalResults;
     }
 
-    public void setTotalResults(int totalResults) {
-        this.totalResults = totalResults;
-    }
-
     public Set<NewsArticle> getPageData() {
         return articles;
-    }
-
-    public void setArticles(Set<NewsArticle> articles) {
-        this.articles = articles;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (var article : articles) {
-            sb.append(article);
-            sb.append(System.lineSeparator());
-        }
-        return sb.toString().stripTrailing();
     }
 }

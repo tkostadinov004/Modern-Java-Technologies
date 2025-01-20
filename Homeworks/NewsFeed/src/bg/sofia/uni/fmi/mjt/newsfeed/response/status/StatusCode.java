@@ -23,15 +23,4 @@ public enum StatusCode {
     public int getValue() {
         return value;
     }
-
-    public static StatusCode of(int value) {
-        return switch (value) {
-            case Constants.OK_CODE -> StatusCode.OK;
-            case Constants.BAD_REQUEST_CODE -> StatusCode.BAD_REQUEST;
-            case Constants.UNAUTHORIZED_CODE -> StatusCode.UNAUTHORIZED;
-            case Constants.TOO_MANY_REQUESTS_CODE -> StatusCode.TOO_MANY_REQUESTS;
-            case Constants.SERVER_ERROR_CODE -> StatusCode.SERVER_ERROR;
-            default -> throw new IllegalArgumentException("Invalid status code!");
-        };
-    }
 }

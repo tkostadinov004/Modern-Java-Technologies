@@ -1,34 +1,35 @@
 package bg.sofia.uni.fmi.mjt.newsfeed.response.pagination;
 
+import bg.sofia.uni.fmi.mjt.newsfeed.request.criteria.FetchRequest;
+import bg.sofia.uni.fmi.mjt.newsfeed.request.criteria.RequestBuilder;
 import bg.sofia.uni.fmi.mjt.newsfeed.news.NewsArticle;
 import bg.sofia.uni.fmi.mjt.newsfeed.request.RequestSender;
-import bg.sofia.uni.fmi.mjt.newsfeed.request.builder.FetchRequestBuilder;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.ResponseHandler;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.LimitedRateException;
+import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.LogicalParameterException;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.NewsFeedResponseException;
-import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.ParameterException;
+import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.MissingParameterException;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.SourcesException;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public class PaginatedNewsList implements PaginatedList<NewsArticle> {
     private int currentPageNumber;
     private final int totalPages;
-    private FetchRequestBuilder requestBuilder;
+    private RequestBuilder requestBuilder;
     private RequestSender requestSender;
     private Page<NewsArticle> initialPage;
+    private boolean isInitialPageUsed;
 
     public PaginatedNewsList(int resultsPerPage,
+                             int currentPage,
                              Page<NewsArticle> initialPage,
-                             FetchRequestBuilder requestBuilder,
+                             RequestBuilder requestBuilder,
                              RequestSender requestSender) {
-        this.currentPageNumber = 0;
+        this.currentPageNumber = currentPage;
         this.totalPages = (int)Math.ceil(initialPage.getTotalResults() * 1.0 / resultsPerPage);
         this.initialPage = initialPage;
         this.requestBuilder = requestBuilder;
         this.requestSender = requestSender;
+        this.isInitialPageUsed = false;
     }
 
     public int getPagesCount() {
@@ -36,14 +37,13 @@ public class PaginatedNewsList implements PaginatedList<NewsArticle> {
     }
 
     private Page<NewsArticle> sendRequest(int pageNumber) throws
-            URISyntaxException, IOException,
-            InterruptedException, NewsFeedResponseException,
-            LimitedRateException, ParameterException, SourcesException {
+            NewsFeedResponseException,
+            LimitedRateException, MissingParameterException, LogicalParameterException, SourcesException {
         if (pageNumber > 0) {
             requestBuilder.page(pageNumber);
         }
-        URI uri = requestBuilder.buildURI();
-        ResponseHandler response = requestSender.sendRequest(uri);
+        FetchRequest request = requestBuilder.build();
+        ResponseHandler response = requestSender.sendRequest(request.uri());
         return response.deserializePage();
     }
 
@@ -54,36 +54,35 @@ public class PaginatedNewsList implements PaginatedList<NewsArticle> {
 
     @Override
     public boolean hasPreviousPage() {
-        return currentPageNumber > 1;
+        if (isInitialPageUsed)
+            return currentPageNumber > 1;
+        return currentPageNumber > 0;
     }
 
     @Override
-    public Page<NewsArticle> nextPage() {
+    public Page<NewsArticle> nextPage() throws
+            NewsFeedResponseException,
+            LimitedRateException, MissingParameterException, LogicalParameterException, SourcesException {
         if (!hasNextPage()) {
             throw new PaginationException("There is no next page!");
         }
         if (currentPageNumber == 0) {
             currentPageNumber++;
+            this.isInitialPageUsed = true;
             return initialPage;
         }
 
-        try {
-            return sendRequest(++currentPageNumber);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return sendRequest(++currentPageNumber);
     }
 
     @Override
-    public Page<NewsArticle> previousPage() {
+    public Page<NewsArticle> previousPage() throws
+            NewsFeedResponseException,
+            LimitedRateException, MissingParameterException, LogicalParameterException, SourcesException {
         if (!hasPreviousPage()) {
             throw new PaginationException("There is no previous page!");
         }
 
-        try {
-            return sendRequest(--currentPageNumber);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return sendRequest(--currentPageNumber);
     }
 }

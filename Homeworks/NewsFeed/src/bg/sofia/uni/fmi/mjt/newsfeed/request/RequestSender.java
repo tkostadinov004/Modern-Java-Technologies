@@ -1,25 +1,30 @@
 package bg.sofia.uni.fmi.mjt.newsfeed.request;
 
-import bg.sofia.uni.fmi.mjt.newsfeed.request.builder.FetchRequestBuilder;
 import bg.sofia.uni.fmi.mjt.newsfeed.request.security.ApiKeyLoader;
-import bg.sofia.uni.fmi.mjt.newsfeed.request.security.ApiSecurityException;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.ResponseHandler;
+import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.NewsFeedResponseException;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class RequestSender {
-    private HttpRequest createRequest(URI uri) throws URISyntaxException {
-        String apiKey = "";
-        try {
-            apiKey = ApiKeyLoader.getApiKey("config.properties", "api.key");
-        } catch (IOException e) {
-            throw new ApiSecurityException("Unable to find API key!");
-        }
+    private final Reader propertiesReader;
+    private final String apiPropertyKeyName;
+    private HttpClient client;
+
+    public RequestSender(Reader propertiesReader, String apiPropertyKeyName, HttpClient client) {
+        this.propertiesReader = propertiesReader;
+        this.apiPropertyKeyName = apiPropertyKeyName;
+        this.client = client;
+    }
+
+    private HttpRequest createRequest(URI uri) {
+        ApiKeyLoader loader = new ApiKeyLoader(propertiesReader);
+        String apiKey = loader.getApiKey(apiPropertyKeyName);
 
         return HttpRequest
                 .newBuilder()
@@ -28,21 +33,13 @@ public class RequestSender {
                 .build();
     }
 
-    public ResponseHandler sendRequest(URI uri) throws URISyntaxException, InterruptedException, IOException {
-        HttpRequest request = createRequest(uri);
-        HttpClient client = HttpClient.newBuilder().build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        return new ResponseHandler(response.statusCode(), response.body());
-    }
-
-    public ResponseHandler sendRequest(FetchRequestBuilder requestBuilder) throws InterruptedException, IOException {
+    public ResponseHandler sendRequest(URI uri) throws NewsFeedResponseException {
         try {
-            HttpRequest request = createRequest(requestBuilder.buildURI());
-            HttpClient client = HttpClient.newBuilder().build();
+            HttpRequest request = createRequest(uri);
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return new ResponseHandler(response.statusCode(), response.body());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+            return new ResponseHandler(response.statusCode(), request, response.body());
+        } catch (IOException | InterruptedException e) {
+            throw new NewsFeedResponseException(e.getMessage(), e);
         }
     }
 }
