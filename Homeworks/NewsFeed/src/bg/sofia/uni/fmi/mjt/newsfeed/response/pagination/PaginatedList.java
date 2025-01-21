@@ -50,7 +50,7 @@ public interface PaginatedList<T> {
      * @throws MissingParameterException if one or more required parameters are missing
      * @throws LogicalParameterException if one or more of the parameters have invalid values
      * @throws SourcesException if the specified sources are too many, or at least one of them doesn't exist
-     * @throws NewsFeedResponseException if any other logical error in handling the request occurs
+     * @throws NewsFeedResponseException if any other logical error in handling of the request occurs
      */
     Page<T> previousPage() throws
             NewsFeedResponseException,

@@ -17,7 +17,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 
 public class ResponseHandlerTest {
     @Test
@@ -26,7 +25,7 @@ public class ResponseHandlerTest {
                 new ResponseHandler(400, null, "{\"code\": \"parameterInvalid\"}");
 
         assertThrows(LogicalParameterException.class,
-                () -> handler.deserializePage(),
+                handler::deserializePage,
                 "Exception should be thrown when having an invalid parameter");
     }
 
@@ -36,7 +35,7 @@ public class ResponseHandlerTest {
                 new ResponseHandler(400, null, "{\"code\": \"parametersMissing\"}");
 
         assertThrows(MissingParameterException.class,
-                () -> handler.deserializePage(),
+                handler::deserializePage,
                 "Exception should be thrown when having missing parameters");
     }
 
@@ -46,7 +45,7 @@ public class ResponseHandlerTest {
                 new ResponseHandler(400, null,"{\"code\": \"rateLimited\"}");
 
         assertThrows(LimitedRateException.class,
-                () -> handler.deserializePage(),
+                handler::deserializePage,
                 "Exception should be thrown when exceeding the rate limit");
     }
 
@@ -56,7 +55,7 @@ public class ResponseHandlerTest {
                 new ResponseHandler(400, null,"{\"code\": \"sourcesTooMany\"}");
 
         assertThrows(SourcesException.class,
-                () -> handler.deserializePage(),
+                handler::deserializePage,
                 "Exception should be thrown when sources are too many");
     }
 
@@ -66,7 +65,7 @@ public class ResponseHandlerTest {
                 new ResponseHandler(400, null,"{\"code\": \"sourceDoesNotExist\"}");
 
         assertThrows(SourcesException.class,
-                () -> handler.deserializePage(),
+                handler::deserializePage,
                 "Exception should be thrown when a source does not exist");
     }
 
@@ -76,7 +75,7 @@ public class ResponseHandlerTest {
                 new ResponseHandler(400, null,"{\"code\": \"exampleErrorCode\"}");
 
         assertThrows(NewsFeedResponseException.class,
-                () -> handler.deserializePage(),
+                handler::deserializePage,
                 "Exception should be thrown when encountering a request error");
     }
 

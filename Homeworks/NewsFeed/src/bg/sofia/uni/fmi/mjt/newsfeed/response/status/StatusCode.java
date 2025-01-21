@@ -15,7 +15,7 @@ public enum StatusCode {
         private static final int SERVER_ERROR_CODE = 500;
     }
 
-    private int value;
+    private final int value;
     StatusCode(int value) {
         this.value = value;
     }

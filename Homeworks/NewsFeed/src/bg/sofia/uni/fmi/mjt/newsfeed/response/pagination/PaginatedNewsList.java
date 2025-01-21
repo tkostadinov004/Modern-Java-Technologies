@@ -14,9 +14,9 @@ import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.SourcesException;
 public class PaginatedNewsList implements PaginatedList<NewsArticle> {
     private int currentPageNumber;
     private final int totalPages;
-    private RequestBuilder requestBuilder;
-    private RequestSender requestSender;
-    private Page<NewsArticle> initialPage;
+    private final RequestBuilder requestBuilder;
+    private final RequestSender requestSender;
+    private final Page<NewsArticle> initialPage;
     private boolean isInitialPageUsed;
 
     public PaginatedNewsList(int resultsPerPage,

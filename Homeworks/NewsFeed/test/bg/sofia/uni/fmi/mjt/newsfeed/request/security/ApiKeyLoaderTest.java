@@ -2,7 +2,6 @@ package bg.sofia.uni.fmi.mjt.newsfeed.request.security;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 

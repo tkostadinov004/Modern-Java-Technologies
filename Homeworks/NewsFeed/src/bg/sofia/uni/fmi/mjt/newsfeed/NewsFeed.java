@@ -12,7 +12,7 @@ import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.NewsFeedResponseE
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.SourcesException;
 
 public class NewsFeed implements NewsFeedApi {
-    private RequestSender requestSender;
+    private final RequestSender requestSender;
 
     public NewsFeed(RequestSender requestSender) {
         this.requestSender = requestSender;

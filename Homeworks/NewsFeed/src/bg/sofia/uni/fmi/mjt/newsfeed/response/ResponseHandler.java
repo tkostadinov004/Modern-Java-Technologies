@@ -12,29 +12,7 @@ import com.google.gson.Gson;
 
 import java.net.http.HttpRequest;
 
-public class ResponseHandler {
-    private int statusCode;
-    private HttpRequest request;
-    private String body;
-
-    public ResponseHandler(int statusCode, HttpRequest request, String body) {
-        this.statusCode = statusCode;
-        this.request = request;
-        this.body = body;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public HttpRequest getRequest() {
-        return request;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
+public record ResponseHandler(int statusCode, HttpRequest request, String body) {
     public NewsResponsePage deserializePage() throws
             LimitedRateException, MissingParameterException,
             LogicalParameterException, SourcesException, NewsFeedResponseException {

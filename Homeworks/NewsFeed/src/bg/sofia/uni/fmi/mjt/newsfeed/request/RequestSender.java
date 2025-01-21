@@ -14,7 +14,7 @@ import java.net.http.HttpResponse;
 public class RequestSender {
     private final Reader propertiesReader;
     private final String apiPropertyKeyName;
-    private HttpClient client;
+    private final HttpClient client;
 
     public RequestSender(Reader propertiesReader, String apiPropertyKeyName, HttpClient client) {
         this.propertiesReader = propertiesReader;

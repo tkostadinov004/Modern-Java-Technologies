@@ -1,10 +1,8 @@
 package bg.sofia.uni.fmi.mjt.newsfeed.response.pagination;
 
 import bg.sofia.uni.fmi.mjt.newsfeed.news.NewsArticle;
-import bg.sofia.uni.fmi.mjt.newsfeed.news.NewsSource;
 import bg.sofia.uni.fmi.mjt.newsfeed.request.RequestSender;
 import bg.sofia.uni.fmi.mjt.newsfeed.request.criteria.FetchRequest;
-import bg.sofia.uni.fmi.mjt.newsfeed.request.criteria.FetchRequestBuilder;
 import bg.sofia.uni.fmi.mjt.newsfeed.request.criteria.RequestBuilder;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.ResponseHandler;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.LimitedRateException;
@@ -17,19 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpRequest;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -67,10 +60,10 @@ public class PaginatedNewsListTest {
         PaginatedList<NewsArticle> paginatedList =
                 new PaginatedNewsList(10, 0, initialPage, requestBuilder, requestSender);
 
-        assertDoesNotThrow(() -> paginatedList.nextPage(),
+        assertDoesNotThrow(paginatedList::nextPage,
                 "The initial page is not used yet, therefore no exception should be thrown.");
         assertThrows(PaginationException.class,
-                () -> paginatedList.nextPage(),
+                paginatedList::nextPage,
                 "Exception should be thrown when trying to get next page after the last one.");
     }
 
@@ -167,9 +160,9 @@ public class PaginatedNewsListTest {
                 new PaginatedNewsList(2,0, initialPage, requestBuilder, requestSender);
 
         assertThrows(PaginationException.class,
-                () -> paginatedList.previousPage());
-        assertDoesNotThrow(() -> paginatedList.nextPage());
+                paginatedList::previousPage);
+        assertDoesNotThrow(paginatedList::nextPage);
         assertThrows(PaginationException.class,
-                () -> paginatedList.previousPage());
+                paginatedList::previousPage);
     }
 }

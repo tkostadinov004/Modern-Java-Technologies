@@ -1,11 +1,8 @@
 package bg.sofia.uni.fmi.mjt.newsfeed.request;
 
-import bg.sofia.uni.fmi.mjt.newsfeed.request.security.ApiKeyLoader;
 import bg.sofia.uni.fmi.mjt.newsfeed.request.security.ApiSecurityException;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.ResponseHandler;
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.NewsFeedResponseException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -69,9 +66,9 @@ public class RequestSenderTest {
         ResponseHandler actual = sender.sendRequest(URI.create("https://google.com/"));
         ResponseHandler expected = new ResponseHandler(200,  httpRequest, "body example");
 
-        assertEquals(expected.getStatusCode(), actual.getStatusCode());
-        assertEquals(expected.getRequest(), actual.getRequest());
-        assertEquals(expected.getBody(), actual.getBody());
+        assertEquals(expected.statusCode(), actual.statusCode());
+        assertEquals(expected.request(), actual.request());
+        assertEquals(expected.body(), actual.body());
 
         verify(httpClient, times(1))
                 .send(httpRequest, HttpResponse.BodyHandlers.ofString());

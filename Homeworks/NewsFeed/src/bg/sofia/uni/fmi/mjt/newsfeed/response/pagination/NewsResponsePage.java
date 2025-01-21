@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class NewsResponsePage implements Page<NewsArticle> {
-    private int totalResults;
-    private Set<NewsArticle> articles;
+    private final int totalResults;
+    private final Set<NewsArticle> articles;
 
     @Override
     public boolean equals(Object o) {

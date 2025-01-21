@@ -5,7 +5,7 @@ import java.io.Reader;
 import java.util.Properties;
 
 public class ApiKeyLoader {
-    private Reader reader;
+    private final Reader reader;
 
     public ApiKeyLoader(Reader reader) {
         this.reader = reader;

@@ -16,7 +16,6 @@ import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.NewsFeedResponseE
 import bg.sofia.uni.fmi.mjt.newsfeed.response.status.exception.SourcesException;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Instant;
@@ -30,7 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class NewsFeedTest {
-    private static RequestSender requestSender = mock();
+    private final RequestSender requestSender = mock();
 
     private Set<NewsArticle> getSampleArticles() {
         NewsSource source1 = new NewsSource("fox-news", "Fox News");
@@ -59,7 +58,7 @@ public class NewsFeedTest {
     }
 
     @Test
-    public void getsNewsByRequestSuccessfully() throws InterruptedException, IOException, MissingParameterException, LogicalParameterException, SourcesException,
+    public void getsNewsByRequestSuccessfully() throws MissingParameterException, LogicalParameterException, SourcesException,
             LimitedRateException, NewsFeedResponseException {
         HttpRequest httpRequest = mock();
         when(httpRequest.uri()).thenReturn(URI.create("test-uri"));
