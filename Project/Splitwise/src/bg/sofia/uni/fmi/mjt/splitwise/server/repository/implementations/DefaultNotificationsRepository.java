@@ -4,6 +4,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

@@ -5,6 +5,10 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.FriendGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.GroupAlreadyExistsException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -169,7 +173,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
 
         boolean removedGroup = friendGroups.remove(group);
         if (!removedGroup) {
-            throw new NonExistingGroupException("Group with name %s does not exist!".formatted(groupName));
+            throw new NonExistingGroupException("Group with name %s does not exist!".formatted(group.name()));
         }
     }
 }

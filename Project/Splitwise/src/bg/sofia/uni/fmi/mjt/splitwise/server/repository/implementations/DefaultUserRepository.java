@@ -4,6 +4,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.Hasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyRegisteredException;
 
 import java.util.HashSet;
 import java.util.Optional;

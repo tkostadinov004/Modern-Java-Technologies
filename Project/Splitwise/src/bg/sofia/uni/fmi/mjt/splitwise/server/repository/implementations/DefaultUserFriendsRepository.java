@@ -3,6 +3,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
 import java.util.HashMap;
 import java.util.HashSet;
