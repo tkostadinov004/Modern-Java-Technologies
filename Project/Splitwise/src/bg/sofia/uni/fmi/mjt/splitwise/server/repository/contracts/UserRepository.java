@@ -7,8 +7,6 @@ import java.util.Optional;
 public interface UserRepository {
     boolean containsUser(String username);
 
-    boolean containsUser(User user);
-
     Optional<User> getUserByUsername(String username);
 
     void registerUser(String username, String password, String firstName, String lastName);

@@ -27,15 +27,6 @@ public class DefaultUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean containsUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
-
-        return users.contains(user);
-    }
-
-    @Override
     public Optional<User> getUserByUsername(String username) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");

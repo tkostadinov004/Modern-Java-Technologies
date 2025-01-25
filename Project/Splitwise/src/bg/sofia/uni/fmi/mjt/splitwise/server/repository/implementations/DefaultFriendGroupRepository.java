@@ -66,19 +66,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(groupName));
         }
 
-        return isInGroup(user.get(), group.get());
-    }
-
-    @Override
-    public boolean isInGroup(User user, FriendGroup group) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
-        if (group == null) {
-            throw new IllegalArgumentException("Friend group cannot be null!");
-        }
-
-        return group.participants().contains(group);
+        return group.get().participants().contains(user.get());
     }
 
     @Override
@@ -132,22 +120,9 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(groupName));
         }
 
-        removeFromGroup(user.get(), group.get());
-    }
-
-    @Override
-    public void removeFromGroup(User user, FriendGroup group) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
-        if (group == null) {
-            throw new IllegalArgumentException("Group cannot be null!");
-        }
-
-        boolean removedUser = group.participants().remove(user);
-        if (!removedUser) {
+        if (!group.get().participants().remove(user.get())) {
             throw new FriendGroupException("User with username %s is not in group with name %s!"
-                    .formatted(user.username(), group.name()));
+                    .formatted(user.get().username(), group.get().name()));
         }
     }
 
@@ -162,17 +137,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(groupName));
         }
 
-        removeGroup(group.get());
-    }
-
-    @Override
-    public void removeGroup(FriendGroup group) {
-        if (group == null) {
-            throw new IllegalArgumentException("Group cannot be null!");
-        }
-
-        boolean removedGroup = friendGroups.remove(group);
-        if (!removedGroup) {
+        if (!friendGroups.remove(group)) {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(group.name()));
         }
     }

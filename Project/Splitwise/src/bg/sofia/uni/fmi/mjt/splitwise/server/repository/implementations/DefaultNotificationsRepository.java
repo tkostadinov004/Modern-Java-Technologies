@@ -33,39 +33,16 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
         }
 
-        return getNotificationForUser(user.get());
-    }
-
-    @Override
-    public Set<Notification> getNotificationForUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
-        if (!notificationsMap.containsKey(user)) {
+        if (!notificationsMap.containsKey(user.get())) {
             return Set.of();
         }
-
-        return notificationsMap.get(user);
+        return notificationsMap.get(user.get());
     }
 
     @Override
     public void addNotificationForUser(String username, String notificationContent, LocalDateTime timeSent) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
-        }
-
-        Optional<User> user = userRepository.getUserByUsername(username);
-        if (user.isEmpty()) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
-        }
-
-        addNotificationForUser(user.get(), notificationContent, timeSent);
-    }
-
-    @Override
-    public void addNotificationForUser(User user, String notificationContent, LocalDateTime timeSent) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
         }
         if (notificationContent == null || notificationContent.isEmpty() || notificationContent.isBlank()) {
             throw new IllegalArgumentException("Notification content cannot be null, blank or empty!");
@@ -74,9 +51,14 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new IllegalArgumentException("Time sent cannot be null!");
         }
 
-        notificationsMap.putIfAbsent(user, new HashSet<>());
+        Optional<User> user = userRepository.getUserByUsername(username);
+        if (user.isEmpty()) {
+            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+        }
 
-        Notification notification = new Notification(notificationContent, user, timeSent);
+        notificationsMap.putIfAbsent(user.get(), new HashSet<>());
+
+        Notification notification = new Notification(notificationContent, user.get(), timeSent);
         notificationsMap.get(user).add(notification);
     }
 
@@ -90,15 +72,6 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
         if (user.isEmpty()) {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
         }
-        removeAllNotificationsForUser(user.get());
-    }
-
-    @Override
-    public void removeAllNotificationsForUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
-
-        notificationsMap.remove(user);
+        notificationsMap.remove(user.get());
     }
 }

@@ -38,18 +38,6 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(secondUsername));
         }
 
-        return isFriendOf(first.get(), second.get());
-    }
-
-    @Override
-    public boolean isFriendOf(User first, User second) {
-        if (first == null) {
-            throw new IllegalArgumentException("First user cannot be null!");
-        }
-        if (second == null) {
-            throw new IllegalArgumentException("Second user cannot be null!");
-        }
-
         return friendMap.containsKey(first) && friendMap.get(first).contains(second);
     }
 
@@ -64,18 +52,9 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
         }
 
-        return getFriendsOf(user.get());
-    }
-
-    @Override
-    public Set<User> getFriendsOf(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
         if (!friendMap.containsKey(user)) {
             return Set.of();
         }
-
         return friendMap.get(user);
     }
 
@@ -97,22 +76,10 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(secondUsername));
         }
 
-        makeFriends(first.get(), second.get());
-    }
+        friendMap.putIfAbsent(first.get(), new HashSet<>());
+        friendMap.putIfAbsent(second.get(), new HashSet<>());
 
-    @Override
-    public void makeFriends(User first, User second) {
-        if (first == null) {
-            throw new IllegalArgumentException("First user cannot be null!");
-        }
-        if (second == null) {
-            throw new IllegalArgumentException("Second user cannot be null!");
-        }
-
-        friendMap.putIfAbsent(first, new HashSet<>());
-        friendMap.putIfAbsent(second, new HashSet<>());
-
-        friendMap.get(first).add(second);
-        friendMap.get(second).add(first);
+        friendMap.get(first.get()).add(second.get());
+        friendMap.get(second.get()).add(first.get());
     }
 }

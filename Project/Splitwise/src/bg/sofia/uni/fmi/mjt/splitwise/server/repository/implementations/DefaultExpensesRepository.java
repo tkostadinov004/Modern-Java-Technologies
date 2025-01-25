@@ -2,7 +2,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Expense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.DebtsRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.ImpossibleExpenseException;
@@ -17,13 +17,21 @@ import java.util.stream.Collectors;
 
 public class DefaultExpensesRepository implements ExpensesRepository {
     private final UserRepository userRepository;
-    private final DebtsRepository debtsRepository;
+    private final PersonalDebtsRepository personalDebtsRepository;
     private final Map<User, Set<Expense>> expensesMap;
 
-    public DefaultExpensesRepository(UserRepository userRepository, DebtsRepository debtsRepository) {
+    public DefaultExpensesRepository(UserRepository userRepository, PersonalDebtsRepository personalDebtsRepository) {
         this.userRepository = userRepository;
-        this.debtsRepository = debtsRepository;
+        this.personalDebtsRepository = personalDebtsRepository;
         this.expensesMap = new HashMap<>();
+    }
+
+    private Set<Expense> getExpensesOf(User user) {
+        if (!expensesMap.containsKey(user)) {
+            return Set.of();
+        }
+
+        return expensesMap.get(user);
     }
 
     @Override
@@ -38,18 +46,6 @@ public class DefaultExpensesRepository implements ExpensesRepository {
         }
 
         return getExpensesOf(user.get());
-    }
-
-    @Override
-    public Set<Expense> getExpensesOf(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null!");
-        }
-        if (!expensesMap.containsKey(user)) {
-            return Set.of();
-        }
-
-        return expensesMap.get(user);
     }
 
     private void validateExpense(String payerUsername, double amount, String purpose, Set<String> participantsUsernames) {
@@ -85,14 +81,14 @@ public class DefaultExpensesRepository implements ExpensesRepository {
                     return user.get();
                 }).collect(Collectors.toCollection(HashSet::new));
         if (validParticipants.isEmpty()) {
-            throw new ImpossibleExpenseException("There are no valid participants in the expense operation, besides the payer");
+            throw new ImpossibleExpenseException("There are no valid participants in the expense operation, besides the debtor");
         }
         Expense expense = new Expense(payer.get(), amount, purpose, validParticipants);
         expensesMap.putIfAbsent(payer.get(), new HashSet<>());
         expensesMap.get(payer.get()).add(expense);
 
         double amountPerPerson = amount / (validParticipants.size() + 1);
-        validParticipants.forEach(user -> debtsRepository.updateDebt(payer.get(), user, amountPerPerson));
+        validParticipants.forEach(user -> personalDebtsRepository.updateDebt(payer.get(), user, amountPerPerson, purpose));
         if (!nonExistingParticipants.isEmpty()) {
             throw new NonExistingUserException("Users with usernames %s do not exist, therefore they're not included in the expense splitting"
                     .formatted(String.join(", ", nonExistingParticipants)));
