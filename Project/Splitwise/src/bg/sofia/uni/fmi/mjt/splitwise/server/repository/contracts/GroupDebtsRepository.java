@@ -1,17 +1,20 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.GroupDebt;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.Debt;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 public interface GroupDebtsRepository {
-    Set<GroupDebt> getDebtsOf(String username, String groupName);
+    Map<FriendGroup, Set<Debt>> getDebtsOf(String username);
 
-    Optional<GroupDebt> getDebtOfDebtorAndRecipient(String debtorUsername,
-                                                    String recipientUsername,
-                                                    String groupName,
-                                                    String reason);
+    Optional<Debt> getDebtOfDebtorAndRecipient(String debtorUsername,
+                                               String recipientUsername,
+                                               String groupName,
+                                               String reason);
 
     void addDebt(String debtorUsername,
                  String recipientUsername, String groupName,

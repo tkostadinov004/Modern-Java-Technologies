@@ -27,6 +27,23 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
     }
 
     @Override
+    public Set<FriendGroup> getGroupsOf(String username) {
+        if (username == null || username.isEmpty() || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+        }
+
+        Optional<User> user = userRepository.getUserByUsername(username);
+        if (user.isEmpty()) {
+            throw new NonExistingUserException("User with name %s does not exist!".formatted(username));
+        }
+
+        return friendGroups
+                .stream()
+                .filter(group -> group.participants().contains(user.get()))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Optional<FriendGroup> getGroup(String groupName) {
         if (groupName == null || groupName.isEmpty() || groupName.isBlank()) {
             throw new IllegalArgumentException("Group name cannot be null, blank or empty!");
@@ -138,7 +155,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
         }
 
         if (!friendGroups.remove(group)) {
-            throw new NonExistingGroupException("Group with name %s does not exist!".formatted(group.name()));
+            throw new NonExistingGroupException("Group with name %s does not exist!".formatted(group.get().name()));
         }
     }
 }

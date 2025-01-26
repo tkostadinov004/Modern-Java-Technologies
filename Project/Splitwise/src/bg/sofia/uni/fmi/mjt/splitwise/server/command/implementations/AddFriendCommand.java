@@ -1,0 +1,32 @@
+package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
+
+import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
+
+import java.io.PrintWriter;
+
+public class AddFriendCommand extends Command {
+    private static final int ARGUMENTS_NEEDED = 1;
+    private Authenticator authenticator;
+    private UserFriendsRepository userFriendsRepository;
+
+    private static final int USERNAME_INDEX = 0;
+
+    public AddFriendCommand(Authenticator authenticator, UserFriendsRepository userFriendsRepository,String[] args) {
+        super(ARGUMENTS_NEEDED, args);
+        this.authenticator = authenticator;
+        this.userFriendsRepository = userFriendsRepository;
+    }
+
+    @Override
+    public void execute(PrintWriter writer) {
+        if (!authenticator.isAuthenticated()) {
+            writer.println("You have to be logged in!");
+            return;
+        }
+
+        userFriendsRepository.makeFriends(authenticator.getAuthenticatedUser().username(), arguments[USERNAME_INDEX]);
+        writer.println("Successfully added %s as your friend.".formatted(arguments[USERNAME_INDEX]));
+    }
+}

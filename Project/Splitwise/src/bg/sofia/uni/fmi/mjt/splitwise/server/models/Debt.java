@@ -1,16 +1,14 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.models;
 
-public class GroupDebt {
+public class Debt {
     private User debtor;
     private User recipient;
-    private FriendGroup group;
     private double amount;
     private String reason;
 
-    public GroupDebt(User debtor, User recipient, FriendGroup group, double amount, String reason) {
+    public Debt(User debtor, User recipient, double amount, String reason) {
         this.debtor = debtor;
         this.recipient = recipient;
-        this.group = group;
         this.amount = amount;
         this.reason = reason;
     }
@@ -21,10 +19,6 @@ public class GroupDebt {
 
     public User recipient() {
         return recipient;
-    }
-
-    public FriendGroup group() {
-        return group;
     }
 
     public double amount() {

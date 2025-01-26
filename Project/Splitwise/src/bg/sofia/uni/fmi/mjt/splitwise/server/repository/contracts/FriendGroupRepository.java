@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface FriendGroupRepository {
+    Set<FriendGroup> getGroupsOf(String username);
+
     Optional<FriendGroup> getGroup(String groupName);
 
     boolean containsGroupByName(String groupName);

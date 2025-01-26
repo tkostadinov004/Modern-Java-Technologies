@@ -1,6 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.PersonalDebt;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.Debt;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     private final UserRepository userRepository;
-    private final Set<PersonalDebt> personalDebts;
+    private final Set<Debt> personalDebts;
 
     public DefaultPersonalDebtsRepository(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -21,7 +21,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     }
 
     @Override
-    public Set<PersonalDebt> getDebtsOf(String username) {
+    public Set<Debt> getDebtsOf(String username) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
@@ -37,7 +37,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
-    private Optional<PersonalDebt> getDebtWithPayerAndReceiver(User debtor, User recipient, String reason) {
+    private Optional<Debt> getDebtWithPayerAndReceiver(User debtor, User recipient, String reason) {
         return personalDebts
                 .stream()
                 .filter(debt ->
@@ -48,7 +48,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     }
 
     @Override
-    public Optional<PersonalDebt> getDebtOfDebtorAndRecipient(String debtorUsername, String recipientUsername, String reason) {
+    public Optional<Debt> getDebtOfDebtorAndRecipient(String debtorUsername, String recipientUsername, String reason) {
         if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
             throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
         }
@@ -72,7 +72,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     }
 
     private void addDebt(User debtor, User recipient, double amount, String reason) {
-        PersonalDebt personalDebt = new PersonalDebt(debtor, recipient, amount, reason);
+        Debt personalDebt = new Debt(debtor, recipient, amount, reason);
         personalDebts.add(personalDebt);
     }
 
@@ -104,7 +104,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     }
 
     private void updateDebt(User debtor, User recipient, double amount, String reason) {
-        Optional<PersonalDebt> debt = getDebtWithPayerAndReceiver(debtor, recipient, reason);
+        Optional<Debt> debt = getDebtWithPayerAndReceiver(debtor, recipient, reason);
         if (debt.isEmpty()) {
             addDebt(debtor, recipient, amount, reason);
             return;

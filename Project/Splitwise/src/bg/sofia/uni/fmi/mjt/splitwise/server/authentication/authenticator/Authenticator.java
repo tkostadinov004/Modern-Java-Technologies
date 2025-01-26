@@ -1,11 +1,12 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator;
 
+import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.AlreadyAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 
 public interface Authenticator {
-    boolean isAuthenticated(String username);
+    boolean isAuthenticated();
 
-    boolean isAuthenticated(User user);
+    User getAuthenticatedUser();
 
-    void authenticate(String username, String password);
+    void authenticate(String username, String password) throws AlreadyAuthenticatedException;
 }

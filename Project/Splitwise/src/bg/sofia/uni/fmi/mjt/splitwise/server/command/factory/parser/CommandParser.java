@@ -19,6 +19,6 @@ public class CommandParser {
         }
 
         return new ParsedCommand(splitted[0],
-                Arrays.stream(splitted).skip(1).toList());
+                Arrays.stream(splitted).skip(1).toArray(String[]::new));
     }
 }

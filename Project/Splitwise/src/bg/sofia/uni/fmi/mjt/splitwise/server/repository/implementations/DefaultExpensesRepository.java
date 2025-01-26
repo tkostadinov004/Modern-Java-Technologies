@@ -1,11 +1,13 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Expense;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.ImpossibleExpenseException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
 import java.util.HashMap;
@@ -17,12 +19,16 @@ import java.util.stream.Collectors;
 
 public class DefaultExpensesRepository implements ExpensesRepository {
     private final UserRepository userRepository;
+    private final FriendGroupRepository friendGroupRepository;
     private final PersonalDebtsRepository personalDebtsRepository;
+    private final GroupDebtsRepository groupDebtsRepository;
     private final Map<User, Set<Expense>> expensesMap;
 
-    public DefaultExpensesRepository(UserRepository userRepository, PersonalDebtsRepository personalDebtsRepository) {
+    public DefaultExpensesRepository(UserRepository userRepository, FriendGroupRepository friendGroupRepository, PersonalDebtsRepository personalDebtsRepository, GroupDebtsRepository groupDebtsRepository) {
         this.userRepository = userRepository;
+        this.friendGroupRepository = friendGroupRepository;
         this.personalDebtsRepository = personalDebtsRepository;
+        this.groupDebtsRepository = groupDebtsRepository;
         this.expensesMap = new HashMap<>();
     }
 
@@ -64,34 +70,68 @@ public class DefaultExpensesRepository implements ExpensesRepository {
     }
 
     @Override
-    public void addExpense(String payerUsername, double amount, String purpose, Set<String> participantsUsernames) {
-        validateExpense(payerUsername, amount, purpose, participantsUsernames);
+    public void addPersonalBaseExpense(String payerUsername, String participantUsername, double amount, String purpose) {
+        if (payerUsername == null || payerUsername.isEmpty() || payerUsername.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+        }
+        if (participantUsername == null || participantUsername.isEmpty() || participantUsername.isBlank()) {
+            throw new IllegalArgumentException("Participant username cannot be null, blank or empty!");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Expense amount cannot be less than or equal to 0!");
+        }
+        if (purpose == null || purpose.isEmpty() || purpose.isBlank()) {
+            throw new IllegalArgumentException("Expense purpose cannot be null, blank or empty!");
+        }
 
         Optional<User> payer = userRepository.getUserByUsername(payerUsername);
         if (payer.isEmpty()) {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(payerUsername));
         }
-        Set<String> nonExistingParticipants = new HashSet<>();
-        Set<User> validParticipants = participantsUsernames.stream()
-                .map(username -> {
-                    Optional<User> user = userRepository.getUserByUsername(username);
-                    if (user.isEmpty()) {
-                        nonExistingParticipants.add(username);
-                    }
-                    return user.get();
-                }).collect(Collectors.toCollection(HashSet::new));
-        if (validParticipants.isEmpty()) {
-            throw new ImpossibleExpenseException("There are no valid participants in the expense operation, besides the debtor");
+
+        Optional<User> participant = userRepository.getUserByUsername(participantUsername);
+        if (participant.isEmpty()) {
+            throw new NonExistingUserException("User with username %s does not exist!".formatted(payerUsername));
         }
-        Expense expense = new Expense(payer.get(), amount, purpose, validParticipants);
+        expensesMap.putIfAbsent(payer.get(), new HashSet<>());
+        expensesMap.get(payer.get()).add(new Expense(payer.get(), amount, purpose, Set.of(participant.get())));
+        personalDebtsRepository.updateDebt(participantUsername, payerUsername, amount / 2.0, purpose);
+    }
+
+    @Override
+    public void addGroupExpense(String payerUsername, String groupName, double amount, String purpose) {
+        if (payerUsername == null || payerUsername.isEmpty() || payerUsername.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+        }
+        if (groupName == null || groupName.isEmpty() || groupName.isBlank()) {
+            throw new IllegalArgumentException("Group name cannot be null, blank or empty!");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Expense amount cannot be less than or equal to 0!");
+        }
+        if (purpose == null || purpose.isEmpty() || purpose.isBlank()) {
+            throw new IllegalArgumentException("Expense purpose cannot be null, blank or empty!");
+        }
+
+        Optional<User> payer = userRepository.getUserByUsername(payerUsername);
+        if (payer.isEmpty()) {
+            throw new NonExistingUserException("User with username %s does not exist!".formatted(payerUsername));
+        }
+
+        Optional<FriendGroup> group = friendGroupRepository.getGroup(groupName);
+        if (group.isEmpty()) {
+            throw new NonExistingUserException("Group with name %s does not exist!".formatted(payerUsername));
+        }
+
+        Set<User> participants = group.get().participants()
+                .stream().filter(user -> !user.equals(payer.get()))
+                .collect(Collectors.toSet());
+
+        Expense expense = new Expense(payer.get(), amount, purpose, participants);
         expensesMap.putIfAbsent(payer.get(), new HashSet<>());
         expensesMap.get(payer.get()).add(expense);
 
-        double amountPerPerson = amount / (validParticipants.size() + 1);
-        validParticipants.forEach(user -> personalDebtsRepository.updateDebt(payer.get(), user, amountPerPerson, purpose));
-        if (!nonExistingParticipants.isEmpty()) {
-            throw new NonExistingUserException("Users with usernames %s do not exist, therefore they're not included in the expense splitting"
-                    .formatted(String.join(", ", nonExistingParticipants)));
-        }
+        double amountPerPerson = amount / (group.get().participants().size() + 1);
+        participants.forEach(user -> personalDebtsRepository.updateDebt(user.username(), payer.get().username(), amountPerPerson, purpose));
     }
 }
