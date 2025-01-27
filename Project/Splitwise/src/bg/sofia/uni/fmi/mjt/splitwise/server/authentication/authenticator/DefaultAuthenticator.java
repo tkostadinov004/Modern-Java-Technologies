@@ -7,14 +7,18 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Optional;
 
 public class DefaultAuthenticator implements Authenticator {
     private UserRepository userRepository;
+    private Socket userSocket;
     private User user;
 
-    public DefaultAuthenticator(UserRepository userRepository) {
+    public DefaultAuthenticator(UserRepository userRepository, Socket userSocket) {
         this.userRepository = userRepository;
+        this.userSocket = userSocket;
     }
 
     @Override
@@ -49,5 +53,6 @@ public class DefaultAuthenticator implements Authenticator {
             throw new InvalidCredentialsException("Wrong password!");
         }
         this.user = user.get();
+        userRepository.bindSocketToUser(username, userSocket);
     }
 }

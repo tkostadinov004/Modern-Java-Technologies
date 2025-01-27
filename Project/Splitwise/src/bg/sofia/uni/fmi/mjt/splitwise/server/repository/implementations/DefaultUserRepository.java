@@ -5,16 +5,23 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyRegisteredException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 public class DefaultUserRepository implements UserRepository {
     private final Set<User> users;
+    private final Map<String, Socket> userSockets;
 
     public DefaultUserRepository() {
         this.users = new HashSet<>();
+        this.userSockets = new HashMap<>();
     }
 
     @Override
@@ -36,6 +43,24 @@ public class DefaultUserRepository implements UserRepository {
                 .stream()
                 .filter(user -> user.username().equals(username))
                 .findFirst();
+    }
+
+    @Override
+    public Optional<Socket> getSocketByUsername(String username) {
+        if (!userSockets.containsKey(username)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(userSockets.get(username));
+    }
+
+    @Override
+    public void bindSocketToUser(String username, Socket socket) {
+        if (!containsUser(username)) {
+            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+        }
+
+        userSockets.put(username, socket);
     }
 
     private void validateUser(String username, String password, String firstName, String lastName) {

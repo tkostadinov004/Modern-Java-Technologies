@@ -1,19 +1,40 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.parser;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class CommandParser {
-    private static final String PARSE_REGEX = "[\s+]";
+    private String[] split(String input) {
+        List<String> result = new ArrayList<>();
+        StringBuilder curr = new StringBuilder();
+        boolean isInQuotes = false;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '\"') {
+                isInQuotes = !isInQuotes;
+            } else if ((!isInQuotes && !Character.isWhitespace(c)) || isInQuotes) {
+                curr.append(c);
+            } else if (!isInQuotes && Character.isWhitespace(c)) {
+                result.add(curr.toString());
+                curr.setLength(0);
+            }
+        }
+
+        if (curr.length() > 0) {
+            result.add(curr.toString());
+        }
+
+        return result.toArray(String[]::new);
+    }
 
     public ParsedCommand parse(String input) {
         if (input == null) {
             return null;
         }
 
-        String[] splitted = Arrays.stream(input
-                .split(PARSE_REGEX))
-                .filter(arg -> !arg.isEmpty() && !arg.isBlank())
-                .toArray(String[]::new);
+        String[] splitted = split(input);
         if (splitted.length == 0) {
             return null;
         }
