@@ -2,12 +2,15 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 
 import java.io.PrintWriter;
 
-public class SplitCommand extends Command {
+public class SplitCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
     private Authenticator authenticator;
     private ExpensesRepository expensesRepository;
@@ -41,5 +44,16 @@ public class SplitCommand extends Command {
                 amount,
                 arguments[REASON_INDEX]);
         writer.println("Successfully split %s LV with %s for \"%s\".".formatted(amount, arguments[USERNAME_INDEX], arguments[REASON_INDEX]));
+    }
+
+    public static CommandHelp help() {
+        ParameterContainer parameters = new ParameterContainer();
+        parameters.addParameter("amount", "the amount a user should pay you", false);
+        parameters.addParameter("username", "the username of the user who should pay you", false);
+        parameters.addParameter("reason", "the reason for payment", false);
+
+        return new CommandHelp("split",
+                "with this command you can mark that a user owes you a given amount of money for a specific reason",
+                parameters);
     }
 }

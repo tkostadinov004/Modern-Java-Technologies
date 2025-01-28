@@ -7,22 +7,23 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 
-public class SplitWithGroupCommand extends StandardCommand {
-    private static final int ARGUMENTS_NEEDED = 3;
+public class ExportRecentExpensesCommand extends StandardCommand {
+    private static final int ARGUMENTS_NEEDED = 2;
     private Authenticator authenticator;
     private ExpensesRepository expensesRepository;
 
-    private static final int AMOUNT_INDEX = 0;
-    private static final int GROUP_NAME_INDEX = 1;
-    private static final int REASON_INDEX = 2;
-
-    public SplitWithGroupCommand(Authenticator authenticator, ExpensesRepository expensesRepository, String[] args) {
+    public ExportRecentExpensesCommand(Authenticator authenticator, ExpensesRepository expensesRepository, String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.expensesRepository = expensesRepository;
     }
+
+    private static final int COUNT_INDEX = 0;
+    private static final int FILENAME_INDEX = 1;
 
     @Override
     public void execute(PrintWriter writer) {
@@ -31,28 +32,29 @@ public class SplitWithGroupCommand extends StandardCommand {
             return;
         }
 
-        double amount;
+        int count;
         try {
-            amount = Double.parseDouble(arguments[AMOUNT_INDEX]);
+            count = Integer.parseInt(arguments[COUNT_INDEX]);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid amount!", e);
         }
 
-        expensesRepository.addGroupExpense(authenticator.getAuthenticatedUser().username(),
-                arguments[GROUP_NAME_INDEX],
-                amount,
-                arguments[REASON_INDEX]);
-        writer.println("Successfully split %s LV with group %s for \"%s\".".formatted(amount, arguments[GROUP_NAME_INDEX], arguments[REASON_INDEX]));
+        try {
+            expensesRepository.exportRecent(authenticator.getAuthenticatedUser().username(),
+                    count,
+                    new FileWriter(arguments[FILENAME_INDEX]));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static CommandHelp help() {
         ParameterContainer parameters = new ParameterContainer();
-        parameters.addParameter("amount", "the amount a user should pay you", false);
-        parameters.addParameter("group-name", "the name of the group with which you split your bill", false);
-        parameters.addParameter("reason", "the reason for splitting", false);
+        parameters.addParameter("count", "the amount of expenses you want exported", false);
+        parameters.addParameter("filename", "the name of the file you would want the expenses exported to", false);
 
-        return new CommandHelp("split-group",
-                "with this command you can mark that a all users owe you an equal amount of money for a specific reason",
+        return new CommandHelp("export-recent-expenses",
+                "exports the most recent expenses you have made in a specified CSV file",
                 parameters);
     }
 }

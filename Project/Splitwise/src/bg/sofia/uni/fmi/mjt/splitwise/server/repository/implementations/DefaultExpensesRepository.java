@@ -9,13 +9,26 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
+import com.opencsv.CSVWriter;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DefaultExpensesRepository implements ExpensesRepository {
     private final UserRepository userRepository;
@@ -91,10 +104,10 @@ public class DefaultExpensesRepository implements ExpensesRepository {
 
         Optional<User> participant = userRepository.getUserByUsername(participantUsername);
         if (participant.isEmpty()) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(payerUsername));
+            throw new NonExistingUserException("User with username %s does not exist!".formatted(participantUsername));
         }
-        expensesMap.putIfAbsent(payer.get(), new HashSet<>());
-        expensesMap.get(payer.get()).add(new Expense(payer.get(), amount, purpose, Set.of(participant.get())));
+        expensesMap.putIfAbsent(payer.get(), new LinkedHashSet<>());
+        expensesMap.get(payer.get()).add(new Expense(payer.get(), amount, purpose, LocalDateTime.now(), Set.of(participant.get())));
         personalDebtsRepository.updateDebt(participantUsername, payerUsername, amount / 2.0, purpose);
     }
 
@@ -127,11 +140,26 @@ public class DefaultExpensesRepository implements ExpensesRepository {
                 .stream().filter(user -> !user.equals(payer.get()))
                 .collect(Collectors.toSet());
 
-        Expense expense = new Expense(payer.get(), amount, purpose, participants);
-        expensesMap.putIfAbsent(payer.get(), new HashSet<>());
+        Expense expense = new Expense(payer.get(), amount, purpose, LocalDateTime.now(), participants);
+        expensesMap.putIfAbsent(payer.get(), new LinkedHashSet<>());
         expensesMap.get(payer.get()).add(expense);
 
-        double amountPerPerson = amount / (group.get().participants().size() + 1);
-        participants.forEach(user -> personalDebtsRepository.updateDebt(user.username(), payer.get().username(), amountPerPerson, purpose));
+        double amountPerPerson = amount / (participants.size() + 1);
+        participants.forEach(user -> groupDebtsRepository.updateDebt(user.username(), payerUsername, groupName, amountPerPerson, purpose));
+    }
+
+    @Override
+    public void exportRecent(String username, int count, Writer writer) throws IOException {
+        StatefulBeanToCsv<Expense> beanToCsv = new StatefulBeanToCsvBuilder<Expense>(writer).build();
+        Stream<Expense> expensesStream = getExpensesOf(username)
+                .stream()
+                .sorted(Comparator.comparing(Expense::timestamp).reversed())
+                .limit(count);
+
+        try {
+            beanToCsv.write(expensesStream);
+        } catch (CsvDataTypeMismatchException | CsvRequiredFieldEmptyException e) {
+            throw new IOException(e);
+        }
     }
 }

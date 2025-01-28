@@ -2,6 +2,9 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Debt;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
@@ -11,7 +14,7 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Set;
 
-public class StatusCommand extends Command {
+public class StatusCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 0;
 
     private Authenticator authenticator;
@@ -28,15 +31,19 @@ public class StatusCommand extends Command {
     private void printDebt(Debt debt, PrintWriter writer) {
         writer.print("* ");
         if (debt.debtor().equals(authenticator.getAuthenticatedUser())) {
-            writer.println("%s: You owe %s LV.".formatted(debt.recipient(), debt.amount()));
+            writer.println("%s: You owe %s LV. [%s]".formatted(debt.recipient(), debt.amount(), debt.reason()));
         } else {
-            writer.println("%s: Owes you %s LV.".formatted(debt.debtor(), debt.amount()));
+            writer.println("%s: Owes you %s LV. [%s]".formatted(debt.debtor(), debt.amount(), debt.reason()));
         }
     }
 
     private void printDebtEntry(Map.Entry<FriendGroup, Set<Debt>> debtEntry, PrintWriter writer) {
-        writer.println("* %s".formatted(debtEntry.getKey().name()));
-        debtEntry.getValue().forEach(debt -> printDebt(debt, writer));
+        writer.println("%s: ".formatted(debtEntry.getKey().name()));
+        if (debtEntry.getValue().isEmpty()) {
+            writer.println("<no debts>");
+        } else {
+            debtEntry.getValue().forEach(debt -> printDebt(debt, writer));
+        }
     }
 
     @Override
@@ -61,5 +68,11 @@ public class StatusCommand extends Command {
         } else {
             writer.println("<no debts>");
         }
+    }
+
+    public static CommandHelp help() {
+        return new CommandHelp("get-status",
+                "prints the people you owe money to and the people who owe money to you",
+                new ParameterContainer());
     }
 }

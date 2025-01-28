@@ -1,4 +1,4 @@
-package bg.sofia.uni.fmi.mjt.splitwise.server.chat;
+package bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception;
 
 public class ChatException extends Exception {
     public ChatException(String message) {

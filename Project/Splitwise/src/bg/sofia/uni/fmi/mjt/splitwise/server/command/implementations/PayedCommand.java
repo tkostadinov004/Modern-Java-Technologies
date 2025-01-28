@@ -2,11 +2,14 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 
 import java.io.PrintWriter;
 
-public class PayedCommand extends Command {
+public class PayedCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
     private Authenticator authenticator;
     private PersonalDebtsRepository personalDebtsRepository;
@@ -35,10 +38,21 @@ public class PayedCommand extends Command {
             throw new IllegalArgumentException("Invalid amount!", e);
         }
 
-        personalDebtsRepository.updateDebt(arguments[USERNAME_INDEX],
-                authenticator.getAuthenticatedUser().username(),
+        personalDebtsRepository.updateDebt(authenticator.getAuthenticatedUser().username(),
+                arguments[USERNAME_INDEX],
                 amount,
                 arguments[REASON_INDEX]);
         writer.println("%s payed you %s LV for \"%s\".".formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX]));
+    }
+
+    public static CommandHelp help() {
+        ParameterContainer parameters = new ParameterContainer();
+        parameters.addParameter("amount", "the amount a user paid you", false);
+        parameters.addParameter("username", "the username of the user who paid you", false);
+        parameters.addParameter("reason", "the reason for payment", false);
+
+        return new CommandHelp("payed",
+                "with this command you can mark that a user paid you a given amount for a loan he has to pay to you",
+                parameters);
     }
 }

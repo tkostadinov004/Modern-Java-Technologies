@@ -1,13 +1,11 @@
-package bg.sofia.uni.fmi.mjt.splitwise.server.chat;
+package bg.sofia.uni.fmi.mjt.splitwise.server.chat.token;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.NotAuthenticatedException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatServer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
-
-import java.util.Optional;
 
 public class DefaultChatToken implements ChatToken {
     private final Authenticator authenticator;

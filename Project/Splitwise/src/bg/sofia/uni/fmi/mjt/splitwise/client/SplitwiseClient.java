@@ -1,7 +1,5 @@
 package bg.sofia.uni.fmi.mjt.splitwise.client;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,7 +7,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class SplitwiseClient {

@@ -2,11 +2,9 @@ package bg.sofia.uni.fmi.mjt.splitwise.server;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.DefaultAuthenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatServer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatToken;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.DefaultChatToken;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.DefaultChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.CommandFactory;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatMessagesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
@@ -15,7 +13,6 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultChatMessagesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultFriendGroupRepository;
@@ -46,13 +43,12 @@ public class SplitwiseServer {
             GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(userRepository, friendGroupRepository);
             ExpensesRepository expensesRepository = new DefaultExpensesRepository(userRepository, friendGroupRepository, personalDebtsRepository, groupDebtsRepository);
             ChatRepository chatRepository = new DefaultChatRepository(new InetSocketAddress(serverSocket.getInetAddress(), PORT), userRepository);
-            ChatMessagesRepository chatMessagesRepository = new DefaultChatMessagesRepository();
 
             while (true) {
                 Socket client = serverSocket.accept();
                 Authenticator authenticator = new DefaultAuthenticator(userRepository, client);
                 ChatToken chatToken = new DefaultChatToken(authenticator, userRepository, chatRepository);
-                CommandFactory commandFactory = new CommandFactory(authenticator, chatToken, chatRepository, chatMessagesRepository, expensesRepository, friendGroupRepository, groupDebtsRepository, notificationsRepository, personalDebtsRepository, userFriendsRepository, userRepository);
+                CommandFactory commandFactory = new CommandFactory(authenticator, chatToken, chatRepository, expensesRepository, friendGroupRepository, groupDebtsRepository, notificationsRepository, personalDebtsRepository, userFriendsRepository, userRepository);
                 new Thread(() -> new ClientRequestHandler(client, commandFactory).run()).start();
             }
         } catch (IOException e) {

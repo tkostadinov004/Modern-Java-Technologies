@@ -1,5 +1,7 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command;
 
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+
 import java.io.PrintWriter;
 
 public abstract class Command {
@@ -9,12 +11,7 @@ public abstract class Command {
         setArguments(argumentsNeeded, args);
     }
 
-    private void setArguments(int argumentsNeeded, String[] args) {
-        if (args.length != argumentsNeeded) {
-            throw new IllegalArgumentException("Invalid argument count! Expected %s but was %s.".formatted(arguments, args.length));
-        }
-        this.arguments = args;
-    }
+    protected abstract void setArguments(int argumentsNeeded, String[] args);
 
     public abstract void execute(PrintWriter writer);
 }

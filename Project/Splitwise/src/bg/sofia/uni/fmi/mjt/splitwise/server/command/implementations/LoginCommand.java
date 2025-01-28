@@ -3,10 +3,13 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.AlreadyAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 
 import java.io.PrintWriter;
 
-public class LoginCommand extends Command {
+public class LoginCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 2;
     private Authenticator authenticator;
 
@@ -26,5 +29,15 @@ public class LoginCommand extends Command {
         } catch (AlreadyAuthenticatedException e) {
             writer.println(e.getMessage());
         }
+    }
+
+    public static CommandHelp help() {
+        ParameterContainer parameters = new ParameterContainer();
+        parameters.addParameter("username", "your username", false);
+        parameters.addParameter("password", "your password", false);
+
+        return new CommandHelp("login",
+                "logs you in the system",
+                parameters);
     }
 }

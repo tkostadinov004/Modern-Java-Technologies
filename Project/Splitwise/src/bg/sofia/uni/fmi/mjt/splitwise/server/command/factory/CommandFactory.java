@@ -1,7 +1,7 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.factory;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatToken;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.parser.CommandParser;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.parser.ParsedCommand;
@@ -10,18 +10,18 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ClearNotifi
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.CreateChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.CreateGroupCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExitChatCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExportRecentExpensesCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.HelpCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.JoinChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.LoginCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.PayedCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.PayedGroupCommand;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ReadChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.RegisterCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.SendMessageInChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ShowNotificationsCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.SplitCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.SplitWithGroupCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.StatusCommand;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatMessagesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
@@ -36,7 +36,6 @@ public class CommandFactory implements Factory<Command> {
     private final ChatToken chatToken;
 
     private final ChatRepository chatRepository;
-    private final ChatMessagesRepository chatMessagesRepository;
     private final ExpensesRepository expensesRepository;
     private final FriendGroupRepository friendGroupRepository;
     private final GroupDebtsRepository groupDebtsRepository;
@@ -48,7 +47,6 @@ public class CommandFactory implements Factory<Command> {
     public CommandFactory(Authenticator authenticator,
                           ChatToken chatToken,
                           ChatRepository chatRepository,
-                          ChatMessagesRepository chatMessagesRepository,
                           ExpensesRepository expensesRepository,
                           FriendGroupRepository friendGroupRepository,
                           GroupDebtsRepository groupDebtsRepository,
@@ -59,7 +57,6 @@ public class CommandFactory implements Factory<Command> {
         this.authenticator = authenticator;
         this.chatToken = chatToken;
         this.chatRepository = chatRepository;
-        this.chatMessagesRepository = chatMessagesRepository;
         this.expensesRepository = expensesRepository;
         this.friendGroupRepository = friendGroupRepository;
         this.groupDebtsRepository = groupDebtsRepository;
@@ -79,7 +76,7 @@ public class CommandFactory implements Factory<Command> {
         return switch (command.name()) {
             case "login" -> new LoginCommand(authenticator, command.args());
             case "register" -> new RegisterCommand(authenticator, userRepository, command.args());
-            //case "help" -> new HelpCommand(command.args());
+            case "help" -> new HelpCommand(command.args());
             case "add-friend" -> new AddFriendCommand(authenticator, userFriendsRepository, command.args());
             case "create-group" -> new CreateGroupCommand(authenticator, friendGroupRepository, command.args());
             case "split" -> new SplitCommand(authenticator, expensesRepository, command.args());
@@ -89,12 +86,11 @@ public class CommandFactory implements Factory<Command> {
             case "payed-group" -> new PayedGroupCommand(authenticator, groupDebtsRepository, command.args());
             case "show-notifications" -> new ShowNotificationsCommand(authenticator, notificationsRepository, command.args());
             case "clear-notifications" -> new ClearNotificationsCommand(authenticator, notificationsRepository, command.args());
-            case "create-chat" -> new CreateChatCommand(authenticator, chatRepository, chatMessagesRepository, command.args());
+            case "create-chat" -> new CreateChatCommand(authenticator, chatRepository, command.args());
             case "join-chat" -> new JoinChatCommand(authenticator, chatToken, chatRepository, command.args());
             case "send-message-chat" -> new SendMessageInChatCommand(authenticator, chatToken, chatRepository, command.args());
-            //case "read-chat" -> new ReadChatCommand(authenticator, chatToken, chatRepository, command.args());
             case "exit-chat" -> new ExitChatCommand(authenticator, chatToken, chatRepository, command.args());
-            //case "export-recent-expenses" -> new ExportRecentExpensesCommand(authenticator, expensesRepository, command.args());
+            case "export-recent-expenses" -> new ExportRecentExpensesCommand(authenticator, expensesRepository, command.args());
             default -> throw new IllegalArgumentException("Invalid command!");
         };
     }

@@ -1,9 +1,8 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatCodeGenerator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatServer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatMessagesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingChatRoomException;
@@ -97,13 +96,13 @@ public class DefaultChatRepository implements ChatRepository {
     }
 
     @Override
-    public String createRoom(ChatMessagesRepository chatMessagesRepository) throws ChatException {
+    public String createRoom() throws ChatException {
         ChatCodeGenerator generator = new ChatCodeGenerator();
         String code;
         while (chatServers.containsKey(code = generator.generateRandom())) {
 
         }
-        ChatServer server = new ChatServer(mainServerAddress, code, chatMessagesRepository);
+        ChatServer server = new ChatServer(mainServerAddress, code);
         try {
             server.start();
         } catch (IOException e) {
@@ -119,7 +118,7 @@ public class DefaultChatRepository implements ChatRepository {
         Optional<ChatServer> server = getByCode(roomCode);
         if (server.isPresent()) {
             try {
-                server.get().disconnectUser(userRepository.getSocketByUsername(username).get());
+                server.get().disconnectUser(userSockets.get(userRepository.getSocketByUsername(username).get()));
             } catch (IOException e) {
                 throw new ChatException(e.getMessage());
             }

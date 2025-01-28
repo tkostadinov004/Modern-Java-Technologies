@@ -34,13 +34,28 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
 
+        Optional<User> user = userRepository.getUserByUsername(username);
+        if (user.isEmpty()) {
+            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+        }
+
         return friendGroupRepository
                 .getGroupsOf(username)
                 .stream()
-                .collect(Collectors.toMap(key -> key, key -> groupDebts.get(key)));
+                .collect(Collectors.toMap(key -> key,
+                        key -> {
+                        if (!groupDebts.containsKey(key)) {
+                            return Set.of();
+                        }
+                        return groupDebts.get(key).stream().filter(debt -> debt.debtor().equals(user.get()) || debt.recipient().equals(user.get())).collect(Collectors.toSet());
+                        }));
     }
 
     private Optional<Debt> getDebtOfDebtorAndRecipient(User debtor, User recipient, FriendGroup group, String reason) {
+        if (!groupDebts.containsKey(group)) {
+            return Optional.empty();
+        }
+
         return groupDebts.get(group)
                 .stream()
                 .filter(debt ->
@@ -136,6 +151,9 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
         if (newAmount < 0) {
             debt.get().swapSides();
             newAmount *= (-1);
+        } else if (newAmount == 0) {
+            groupDebts.remove(debt.get());
+            return;
         }
         debt.get().updateAmount(newAmount);
     }

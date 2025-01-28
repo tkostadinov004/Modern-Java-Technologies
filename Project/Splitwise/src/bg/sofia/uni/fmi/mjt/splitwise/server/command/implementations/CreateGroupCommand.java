@@ -2,14 +2,20 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.VariableArgumentsCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CreateGroupCommand extends Command {
+public class CreateGroupCommand extends VariableArgumentsCommand {
     private static final int ARGUMENTS_NEEDED = 3;
     private Authenticator authenticator;
     private FriendGroupRepository friendGroupRepository;
@@ -34,5 +40,15 @@ public class CreateGroupCommand extends Command {
 
         friendGroupRepository.createGroup(arguments[GROUP_NAME_INDEX], groupParticipants);
         writer.println("Successfully created group %s.".formatted(arguments[GROUP_NAME_INDEX]));
+    }
+
+    public static CommandHelp help() {
+        ParameterContainer parameters = new ParameterContainer();
+        parameters.addParameter("group-name", "the name of the group you wish to create", false);
+        parameters.addVariableParameter("user", "the username of a user you want included in the group", ARGUMENTS_NEEDED - 1, false);
+
+        return new CommandHelp("create-group",
+                "creates a group, consisting of you and the other users entered in the command",
+                parameters);
     }
 }

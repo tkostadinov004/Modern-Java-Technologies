@@ -1,13 +1,14 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 
 import java.io.PrintWriter;
 
-public class ClearNotificationsCommand extends Command {
+public class ClearNotificationsCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 0;
     private Authenticator authenticator;
     private NotificationsRepository notificationsRepository;
@@ -27,5 +28,11 @@ public class ClearNotificationsCommand extends Command {
 
         notificationsRepository.removeAllNotificationsForUser(authenticator.getAuthenticatedUser().username());
         writer.println("Successfully cleared all notifications.");
+    }
+
+    public static CommandHelp help() {
+        return new CommandHelp("clear-notifications",
+                "clears the notifications that you have, meaning that they won't be shown again when you log in",
+                new ParameterContainer());
     }
 }

@@ -28,10 +28,10 @@ public class ClientRequestHandler implements Runnable {
                 try {
                     Command command = commandFactory.build(input);
                     command.execute(writer);
-                    writer.println("$end$");
-                } catch (IllegalArgumentException e) {
+                } catch (Exception e) {
                     writer.println(e.getMessage());
                 }
+                writer.println("$end$");
             }
         } catch (IOException e) {
             e.printStackTrace();

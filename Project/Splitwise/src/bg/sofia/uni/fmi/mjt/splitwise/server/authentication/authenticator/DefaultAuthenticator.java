@@ -44,13 +44,9 @@ public class DefaultAuthenticator implements Authenticator {
         }
 
         Optional<User> user = userRepository.getUserByUsername(username);
-        if (user.isEmpty()) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
-        }
-
         PasswordHasher hasher = new PasswordHasher();
-        if (!hasher.hash(password).equals(user.get().hashedPass())) {
-            throw new InvalidCredentialsException("Wrong password!");
+        if (user.isEmpty() || !hasher.hash(password).equals(user.get().hashedPass())) {
+            throw new InvalidCredentialsException("Wrong username or password!");
         }
         this.user = user.get();
         userRepository.bindSocketToUser(username, userSocket);

@@ -115,6 +115,9 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
         if (newAmount < 0) {
             debt.get().swapSides();
             newAmount *= (-1);
+        } else if (newAmount == 0) {
+            personalDebts.remove(debt.get());
+            return;
         }
         debt.get().updateAmount(newAmount);
     }

@@ -1,15 +1,17 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatToken;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 
-public class SendMessageInChatCommand extends Command {
+public class SendMessageInChatCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 1;
     private Authenticator authenticator;
     private ChatToken chatToken;
@@ -40,5 +42,14 @@ public class SendMessageInChatCommand extends Command {
         } catch (ChatException e) {
             writer.println(e.getMessage());
         }
+    }
+
+    public static CommandHelp help() {
+        ParameterContainer parameters = new ParameterContainer();
+        parameters.addParameter("message", "the message you wish to send", false);
+
+        return new CommandHelp("send-message-chat",
+                "sends a message to all users in the chat you are currently in",
+                parameters);
     }
 }
