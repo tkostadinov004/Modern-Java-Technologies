@@ -7,6 +7,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyFriendsException;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -32,8 +33,12 @@ public class AddFriendCommand extends StandardCommand {
             return;
         }
 
-        userFriendsRepository.makeFriends(authenticator.getAuthenticatedUser().username(), arguments[USERNAME_INDEX]);
-        writer.println("Successfully added %s as your friend.".formatted(arguments[USERNAME_INDEX]));
+        try {
+            userFriendsRepository.makeFriends(authenticator.getAuthenticatedUser().username(), arguments[USERNAME_INDEX]);
+            writer.println("Successfully added %s as your friend.".formatted(arguments[USERNAME_INDEX]));
+        } catch (AlreadyFriendsException e) {
+            throw new RuntimeException("You are already friends with %s".formatted(arguments[USERNAME_INDEX]));
+        }
     }
 
     public static CommandHelp help() {

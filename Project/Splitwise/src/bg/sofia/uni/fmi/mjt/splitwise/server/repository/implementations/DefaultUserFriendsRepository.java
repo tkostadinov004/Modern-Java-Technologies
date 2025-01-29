@@ -3,6 +3,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyFriendsException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
 import java.util.HashMap;
@@ -78,6 +79,11 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
 
         friendMap.putIfAbsent(first.get(), new HashSet<>());
         friendMap.putIfAbsent(second.get(), new HashSet<>());
+
+        if (friendMap.get(first.get()).contains(second.get())) {
+            throw new AlreadyFriendsException("User %s is already friends with %s!"
+                    .formatted(firstUsername, secondUsername));
+        }
 
         friendMap.get(first.get()).add(second.get());
         friendMap.get(second.get()).add(first.get());

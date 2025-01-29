@@ -41,7 +41,7 @@ public class SplitwiseServer {
             NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(userRepository);
             FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(userRepository, userFriendsRepository);
             GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(userRepository, friendGroupRepository);
-            ExpensesRepository expensesRepository = new DefaultExpensesRepository(userRepository, friendGroupRepository, personalDebtsRepository, groupDebtsRepository);
+            ExpensesRepository expensesRepository = new DefaultExpensesRepository(userRepository, friendGroupRepository, personalDebtsRepository, groupDebtsRepository, notificationsRepository);
             ChatRepository chatRepository = new DefaultChatRepository(new InetSocketAddress(serverSocket.getInetAddress(), PORT), userRepository);
 
             while (true) {

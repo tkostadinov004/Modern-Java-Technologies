@@ -2,18 +2,18 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Expense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
-import com.opencsv.CSVWriter;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
 import java.io.IOException;
@@ -21,9 +21,7 @@ import java.io.Writer;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,13 +33,15 @@ public class DefaultExpensesRepository implements ExpensesRepository {
     private final FriendGroupRepository friendGroupRepository;
     private final PersonalDebtsRepository personalDebtsRepository;
     private final GroupDebtsRepository groupDebtsRepository;
+    private final NotificationsRepository notificationsRepository;
     private final Map<User, Set<Expense>> expensesMap;
 
-    public DefaultExpensesRepository(UserRepository userRepository, FriendGroupRepository friendGroupRepository, PersonalDebtsRepository personalDebtsRepository, GroupDebtsRepository groupDebtsRepository) {
+    public DefaultExpensesRepository(UserRepository userRepository, FriendGroupRepository friendGroupRepository, PersonalDebtsRepository personalDebtsRepository, GroupDebtsRepository groupDebtsRepository, NotificationsRepository notificationsRepository) {
         this.userRepository = userRepository;
         this.friendGroupRepository = friendGroupRepository;
         this.personalDebtsRepository = personalDebtsRepository;
         this.groupDebtsRepository = groupDebtsRepository;
+        this.notificationsRepository = notificationsRepository;
         this.expensesMap = new HashMap<>();
     }
 
@@ -109,6 +109,9 @@ public class DefaultExpensesRepository implements ExpensesRepository {
         expensesMap.putIfAbsent(payer.get(), new LinkedHashSet<>());
         expensesMap.get(payer.get()).add(new Expense(payer.get(), amount, purpose, LocalDateTime.now(), Set.of(participant.get())));
         personalDebtsRepository.updateDebt(participantUsername, payerUsername, amount / 2.0, purpose);
+        notificationsRepository.addNotificationForUser(participantUsername,
+                "%s noted that they paid %s LV for %s. You owe them %s LV.".formatted(payerUsername, amount, purpose, amount / 2.0),
+                LocalDateTime.now(), NotificationType.PERSONAL);
     }
 
     @Override
@@ -146,6 +149,9 @@ public class DefaultExpensesRepository implements ExpensesRepository {
 
         double amountPerPerson = amount / (participants.size() + 1);
         participants.forEach(user -> groupDebtsRepository.updateDebt(user.username(), payerUsername, groupName, amountPerPerson, purpose));
+        participants.forEach(user -> notificationsRepository.addNotificationForUser(user.username(),
+                "%s noted that they paid %s LV in your group %s for %s. You owe them %s LV.".formatted(payerUsername, amount, groupName, purpose, amountPerPerson),
+                LocalDateTime.now(), NotificationType.GROUP));
     }
 
     @Override

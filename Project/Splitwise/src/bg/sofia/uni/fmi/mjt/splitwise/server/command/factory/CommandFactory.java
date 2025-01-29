@@ -14,6 +14,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExportRecen
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.HelpCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.JoinChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.LoginCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.LogoutCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.PayedCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.PayedGroupCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.RegisterCommand;
@@ -74,8 +75,9 @@ public class CommandFactory implements Factory<Command> {
         }
 
         return switch (command.name()) {
-            case "login" -> new LoginCommand(authenticator, command.args());
+            case "login" -> new LoginCommand(authenticator, notificationsRepository, command.args());
             case "register" -> new RegisterCommand(authenticator, userRepository, command.args());
+            case "logout" -> new LogoutCommand(authenticator, command.args());
             case "help" -> new HelpCommand(command.args());
             case "add-friend" -> new AddFriendCommand(authenticator, userFriendsRepository, command.args());
             case "create-group" -> new CreateGroupCommand(authenticator, friendGroupRepository, command.args());

@@ -1,6 +1,7 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
@@ -9,6 +10,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUse
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
     }
 
     @Override
-    public void addNotificationForUser(String username, String notificationContent, LocalDateTime timeSent) {
+    public void addNotificationForUser(String username, String notificationContent, LocalDateTime timeSent, NotificationType type) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
@@ -56,10 +58,10 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
         }
 
-        notificationsMap.putIfAbsent(user.get(), new HashSet<>());
+        notificationsMap.putIfAbsent(user.get(), new LinkedHashSet<>());
 
-        Notification notification = new Notification(notificationContent, user.get(), timeSent);
-        notificationsMap.get(user).add(notification);
+        Notification notification = new Notification(notificationContent, timeSent, type);
+        notificationsMap.get(user.get()).add(notification);
     }
 
     @Override

@@ -17,7 +17,7 @@ public class SplitwiseClient {
 
             System.out.println(socket.getInetAddress() + " "  + socket.getLocalPort());
 
-            var executor = Executors.newScheduledThreadPool(1);
+            var executor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory());
             executor.scheduleAtFixedRate(() -> {
                 try {
                     if (!reader.ready()) {

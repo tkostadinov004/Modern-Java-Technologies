@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.AlreadyAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.InvalidCredentialsException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.NotAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
@@ -50,5 +51,14 @@ public class DefaultAuthenticator implements Authenticator {
         }
         this.user = user.get();
         userRepository.bindSocketToUser(username, userSocket);
+    }
+
+    @Override
+    public void logout() throws NotAuthenticatedException {
+        if (!isAuthenticated()) {
+            throw new NotAuthenticatedException("You have to login first in order to log out!");
+        }
+
+        this.user = null;
     }
 }
