@@ -1,8 +1,10 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.FriendshipRelationDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
@@ -14,14 +16,24 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DefaultNotificationsRepository implements NotificationsRepository {
+    private final CsvProcessor<Notification> csvProcessor;
     private final UserRepository userRepository;
     private final Map<User, Set<Notification>> notificationsMap;
 
-    public DefaultNotificationsRepository(UserRepository userRepository) {
+    private Map<User, Set<Notification>> populateNotificationsMap() {
+        Set<Notification> notifications = csvProcessor.readAll();
+        return notifications
+                .stream()
+                .collect(Collectors.groupingBy(not -> not.receiver(), Collectors.mapping(rel -> rel, Collectors.toSet())));
+    }
+
+    public DefaultNotificationsRepository(CsvProcessor<Notification> csvProcessor, UserRepository userRepository) {
+        this.csvProcessor = csvProcessor;
         this.userRepository = userRepository;
-        this.notificationsMap = new HashMap<>();
+        this.notificationsMap = populateNotificationsMap();
     }
 
     @Override
@@ -60,8 +72,9 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
 
         notificationsMap.putIfAbsent(user.get(), new LinkedHashSet<>());
 
-        Notification notification = new Notification(notificationContent, timeSent, type);
+        Notification notification = new Notification(user.get(), notificationContent, timeSent, type);
         notificationsMap.get(user.get()).add(notification);
+        csvProcessor.writeToFile(notification);
     }
 
     @Override
@@ -75,5 +88,6 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
         }
         notificationsMap.remove(user.get());
+        csvProcessor.remove(notification -> notification.receiver().username().equals(username));
     }
 }

@@ -1,5 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
@@ -16,14 +17,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DefaultFriendGroupRepository implements FriendGroupRepository {
+    private final CsvProcessor<FriendGroup> csvProcessor;
     private final UserRepository userRepository;
     private final UserFriendsRepository userFriendsRepository;
     private final Set<FriendGroup> friendGroups;
 
-    public DefaultFriendGroupRepository(UserRepository userRepository, UserFriendsRepository userFriendsRepository) {
+    public DefaultFriendGroupRepository(CsvProcessor<FriendGroup> csvProcessor, UserRepository userRepository, UserFriendsRepository userFriendsRepository) {
+        this.csvProcessor = csvProcessor;
         this.userRepository = userRepository;
         this.userFriendsRepository = userFriendsRepository;
-        this.friendGroups = new HashSet<>();
+        this.friendGroups = csvProcessor.readAll();
     }
 
     @Override
@@ -112,6 +115,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
 
         FriendGroup group = new FriendGroup(groupName, users);
         friendGroups.add(group);
+        csvProcessor.writeToFile(group);
         if (!nonExistingUsers.isEmpty()) {
             throw new NonExistingUserException("Users with usernames %s do not exist, therefore they're not included in the group"
                             .formatted(String.join(", ", nonExistingUsers)));
@@ -141,6 +145,8 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
             throw new FriendGroupException("User with username %s is not in group with name %s!"
                     .formatted(user.get().username(), group.get().name()));
         }
+        csvProcessor.modify(g -> g.name().equals(groupName),
+                group.get());
     }
 
     @Override
@@ -157,5 +163,6 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
         if (!friendGroups.remove(group)) {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(group.get().name()));
         }
+        csvProcessor.remove(g -> g.name().equals(groupName));
     }
 }

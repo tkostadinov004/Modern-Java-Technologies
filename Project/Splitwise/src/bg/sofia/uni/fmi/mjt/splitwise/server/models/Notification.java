@@ -2,7 +2,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.models;
 
 import java.time.LocalDateTime;
 
-public record Notification(String content, LocalDateTime timeSent, NotificationType type) {
+public record Notification(User receiver, String content, LocalDateTime timeSent, NotificationType type) {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

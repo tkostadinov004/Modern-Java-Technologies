@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.Hasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyRegisteredException;
@@ -16,11 +17,13 @@ import java.util.Optional;
 import java.util.Set;
 
 public class DefaultUserRepository implements UserRepository {
+    private final CsvProcessor<User> csvProcessor;
     private final Set<User> users;
     private final Map<String, Socket> userSockets;
 
-    public DefaultUserRepository() {
-        this.users = new HashSet<>();
+    public DefaultUserRepository(CsvProcessor<User> csvProcessor) {
+        this.csvProcessor = csvProcessor;
+        this.users = csvProcessor.readAll();
         this.userSockets = new HashMap<>();
     }
 
@@ -88,5 +91,6 @@ public class DefaultUserRepository implements UserRepository {
         Hasher hasher = new PasswordHasher();
         User user = new User(username, hasher.hash(password), firstName, lastName);
         users.add(user);
+        csvProcessor.writeToFile(user);
     }
 }

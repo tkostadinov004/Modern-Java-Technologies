@@ -3,7 +3,6 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Debt;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -20,7 +19,11 @@ public interface GroupDebtsRepository {
                  String recipientUsername, String groupName,
                  double amount, String reason);
 
-    void updateDebt(String debtorUsername,
-                    String recipientUsername, String groupName,
-                    double amount, String reason);
+    void lowerDebtBurden(String debtorUsername,
+                         String recipientUsername, String groupName,
+                         double amount, String reason);
+
+    void increaseDebtBurden(String debtorUsername,
+                         String recipientUsername, String groupName,
+                         double amount, String reason);
 }

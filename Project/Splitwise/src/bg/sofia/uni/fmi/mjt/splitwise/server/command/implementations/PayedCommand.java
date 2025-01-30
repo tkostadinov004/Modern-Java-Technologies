@@ -38,8 +38,8 @@ public class PayedCommand extends StandardCommand {
             throw new IllegalArgumentException("Invalid amount!", e);
         }
 
-        personalDebtsRepository.updateDebt(authenticator.getAuthenticatedUser().username(),
-                arguments[USERNAME_INDEX],
+        personalDebtsRepository.lowerDebtBurden(arguments[USERNAME_INDEX],
+                authenticator.getAuthenticatedUser().username(),
                 amount,
                 arguments[REASON_INDEX]);
         writer.println("%s payed you %s LV for \"%s\".".formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX]));

@@ -12,5 +12,7 @@ public interface PersonalDebtsRepository {
 
     void addDebt(String debtorUsername, String recipientUsername, double amount, String reason);
 
-    void updateDebt(String debtorUsername, String recipientUsername, double amount, String reason);
+    void lowerDebtBurden(String debtorUsername, String recipientUsername, double amount, String reason);
+
+    void increaseDebtBurden(String debtorUsername, String recipientUsername, double amount, String reason);
 }

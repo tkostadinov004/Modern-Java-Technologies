@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
@@ -39,8 +38,8 @@ public class PayedGroupCommand extends StandardCommand {
             throw new IllegalArgumentException("Invalid amount!", e);
         }
 
-        groupDebtsRepository.updateDebt(authenticator.getAuthenticatedUser().username(),
-                arguments[USERNAME_INDEX],
+        groupDebtsRepository.lowerDebtBurden(arguments[USERNAME_INDEX],
+                authenticator.getAuthenticatedUser().username(),
                 arguments[GROUP_NAME_INDEX],
                 amount,
                 arguments[REASON_INDEX]);
