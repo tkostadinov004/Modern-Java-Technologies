@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
@@ -11,8 +10,8 @@ import java.io.PrintWriter;
 
 public class PayedCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
-    private Authenticator authenticator;
-    private PersonalDebtsRepository personalDebtsRepository;
+    private final Authenticator authenticator;
+    private final PersonalDebtsRepository personalDebtsRepository;
 
     private static final int AMOUNT_INDEX = 0;
     private static final int USERNAME_INDEX = 1;
@@ -42,7 +41,8 @@ public class PayedCommand extends StandardCommand {
                 authenticator.getAuthenticatedUser().username(),
                 amount,
                 arguments[REASON_INDEX]);
-        writer.println("%s payed you %s LV for \"%s\".".formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX]));
+        writer.println("%s payed you %s LV for \"%s\"."
+                .formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX]));
     }
 
     public static CommandHelp help() {

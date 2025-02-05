@@ -4,21 +4,23 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.AlreadyAut
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.InvalidCredentialsException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.NotAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
+import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
 
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class DefaultAuthenticator implements Authenticator {
-    private UserRepository userRepository;
-    private Socket userSocket;
+    private final Logger logger;
+    private final UserRepository userRepository;
+    private final Socket userSocket;
     private User user;
 
-    public DefaultAuthenticator(UserRepository userRepository, Socket userSocket) {
-        this.userRepository = userRepository;
+    public DefaultAuthenticator(DependencyContainer dependencyContainer, Socket userSocket) {
+        this.logger = dependencyContainer.get(Logger.class);
+        this.userRepository = dependencyContainer.get(UserRepository.class);
         this.userSocket = userSocket;
     }
 
@@ -51,6 +53,7 @@ public class DefaultAuthenticator implements Authenticator {
         }
         this.user = user.get();
         userRepository.bindSocketToUser(username, userSocket);
+        logger.info("User %s (%s) logged in.".formatted(username, userSocket.getInetAddress()));
     }
 
     @Override
@@ -59,6 +62,7 @@ public class DefaultAuthenticator implements Authenticator {
             throw new NotAuthenticatedException("You have to login first in order to log out!");
         }
 
+        logger.info("User %s (%s) logged out.".formatted(user.username(), userSocket.getInetAddress()));
         this.user = null;
     }
 }

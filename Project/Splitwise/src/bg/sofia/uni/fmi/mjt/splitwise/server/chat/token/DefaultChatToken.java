@@ -3,20 +3,21 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.chat.token;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.NotAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatServer;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.DefaultChatServer;
+import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingChatRoomException;
+
+import java.util.Optional;
 
 public class DefaultChatToken implements ChatToken {
     private final Authenticator authenticator;
-    private final UserRepository userRepository;
     private final ChatRepository chatRepository;
-    private ChatServer chatServer;
+    private DefaultChatServer chatServer;
 
-    public DefaultChatToken( Authenticator authenticator, UserRepository userRepository, ChatRepository chatRepository) {
+    public DefaultChatToken(DependencyContainer dependencyContainer, Authenticator authenticator) {
+        this.chatRepository = dependencyContainer.get(ChatRepository.class);
         this.authenticator = authenticator;
-        this.userRepository = userRepository;
-        this.chatRepository = chatRepository;
     }
 
     @Override
@@ -25,7 +26,7 @@ public class DefaultChatToken implements ChatToken {
     }
 
     @Override
-    public ChatServer getServer() throws ChatException {
+    public DefaultChatServer getServer() throws ChatException {
         if (!isInChat()) {
             throw new ChatException("User is not currently in chat!");
         }
@@ -36,20 +37,26 @@ public class DefaultChatToken implements ChatToken {
     @Override
     public void joinChat(String chatCode) throws ChatException, NotAuthenticatedException {
         if (!authenticator.isAuthenticated()) {
-            throw new NotAuthenticatedException("User is not authenticated!");
+            throw new NotAuthenticatedException("You are not authenticated!");
         }
         if (isInChat()) {
-            throw new ChatException("User is already in chat!");
+            throw new ChatException("You are already in a chat room!");
         }
 
         chatRepository.connectUser(authenticator.getAuthenticatedUser().username(), chatCode);
-        chatServer = chatRepository.getByCode(chatCode).get();
+
+        Optional<DefaultChatServer> server = chatRepository.getByCode(chatCode);
+        if (server.isEmpty()) {
+            throw new NonExistingChatRoomException("Chat room with code %s doesn't exist!".formatted(chatCode));
+        }
+
+        chatServer = server.get();
     }
 
     @Override
     public void leaveChat() throws ChatException {
         if (!isInChat()) {
-            throw new ChatException("User is not in a chat!");
+            throw new ChatException("You are not in a chat room!");
         }
 
         chatRepository.disconnectUser(authenticator.getAuthenticatedUser().username(), chatServer.code());

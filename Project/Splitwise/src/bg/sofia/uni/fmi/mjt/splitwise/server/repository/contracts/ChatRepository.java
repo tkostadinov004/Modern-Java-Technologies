@@ -1,7 +1,7 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatServer;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.DefaultChatServer;
 
 import java.net.Socket;
 import java.util.Optional;
@@ -13,7 +13,7 @@ public interface ChatRepository {
 
     boolean containsRoom(String roomCode);
 
-    Optional<ChatServer> getByCode(String roomCode);
+    Optional<DefaultChatServer> getByCode(String roomCode);
 
     void shutdownRoom(String roomCode);
 

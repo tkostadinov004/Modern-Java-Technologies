@@ -1,28 +1,19 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.Expense;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.ExpenseDTO;
 import com.opencsv.CSVReader;
 
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class ExpensesCsvProcessor extends CsvProcessor<Expense> {
-    private final UserRepository userRepository;
-
-    public ExpensesCsvProcessor(UserRepository userRepository, CSVReader reader, String filePath) {
+public class ExpensesCsvProcessor extends CsvProcessor<ExpenseDTO> {
+    public ExpensesCsvProcessor( CSVReader reader, String filePath) {
         super(reader, filePath);
-        this.userRepository = userRepository;
     }
 
     private static final int NAME_INDEX = 0;
@@ -31,30 +22,7 @@ public class ExpensesCsvProcessor extends CsvProcessor<Expense> {
     private static final int TIMESTAMP_INDEX = 3;
     private static final int PARTICIPANTS_INDEX = 4;
 
-    private User parseUser(String username) {
-        Optional<User> user = userRepository.getUserByUsername(username);
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
-        return user.get();
-    }
-
-    private Set<User> parseGroupParticipants(String arg) {
-        try {
-            return Arrays.stream(arg.split(","))
-                    .map(this::parseUser)
-                    .collect(Collectors.toSet());
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    private Expense parseExpense(String[] args) {
-        Optional<User> payer = userRepository.getUserByUsername(args[NAME_INDEX]);
-        if (payer.isEmpty()) {
-            return null;
-        }
-
+    private ExpenseDTO parseExpense(String[] args) {
         double amount;
         try {
             amount = Double.parseDouble(args[AMOUNT_INDEX]);
@@ -69,32 +37,30 @@ public class ExpensesCsvProcessor extends CsvProcessor<Expense> {
             return null;
         }
 
-        Set<User> groupParticipants = parseGroupParticipants(args[PARTICIPANTS_INDEX]);
-        if (groupParticipants == null) {
-            return null;
-        }
-        return new Expense(payer.get(), amount, args[PURPOSE_INDEX], date, groupParticipants);
+        Set<String> groupParticipantsUsernames = Arrays.stream(args[PARTICIPANTS_INDEX].split(","))
+                .collect(Collectors.toSet());
+        return new ExpenseDTO(args[NAME_INDEX], amount, args[PURPOSE_INDEX], date, groupParticipantsUsernames);
     }
 
     @Override
-    public Set<Expense> readAll() {
+    public Set<ExpenseDTO> readAll() {
         return super.readAll(this::parseExpense);
     }
 
-    private String serializeExpense(Expense expense) {
-        String participants = String.join(",", expense
-                .participants()
-                .stream()
-                .map(user -> user.username())
-                .collect(Collectors.toSet()));
+    private String serializeExpense(ExpenseDTO expense) {
+        String participants = String.join(",", new HashSet<>(expense
+                .participantsUsernames()));
 
         return "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\""
-                .formatted(expense.payer().username(), expense.amount(), expense.purpose(),
-                        DATETIME_PARSE_FORMAT.format(expense.timestamp()), participants);
+                .formatted(expense.payerUsername(),
+                        expense.amount(),
+                        expense.reason(),
+                        DATETIME_PARSE_FORMAT.format(expense.timestamp()),
+                        participants);
     }
 
     @Override
-    public synchronized void writeToFile(Expense obj) {
+    public synchronized void writeToFile(ExpenseDTO obj) {
         super.writeToFile(obj, this::serializeExpense);
     }
 }

@@ -14,15 +14,15 @@ public class CommandParser {
             char c = input.charAt(i);
             if (c == '\"') {
                 isInQuotes = !isInQuotes;
-            } else if ((!isInQuotes && !Character.isWhitespace(c)) || isInQuotes) {
+            } else if (isInQuotes || !Character.isWhitespace(c)) {
                 curr.append(c);
-            } else if (!isInQuotes && Character.isWhitespace(c)) {
+            } else if (Character.isWhitespace(c)) {
                 result.add(curr.toString());
                 curr.setLength(0);
             }
         }
 
-        if (curr.length() > 0) {
+        if (!curr.isEmpty()) {
             result.add(curr.toString());
         }
 

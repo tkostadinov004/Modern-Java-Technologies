@@ -4,7 +4,6 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import com.opencsv.CSVReader;
 
-import java.nio.file.Path;
 import java.util.Set;
 
 public class UserCsvProcessor extends CsvProcessor<User> {

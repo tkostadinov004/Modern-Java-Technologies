@@ -2,19 +2,17 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 
 import java.io.PrintWriter;
-import java.util.List;
 
 public class CreateChatCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 0;
-    private Authenticator authenticator;
-    private ChatRepository chatRepository;
+    private final Authenticator authenticator;
+    private final ChatRepository chatRepository;
 
     public CreateChatCommand(Authenticator authenticator, ChatRepository chatRepository, String[] args) {
         super(ARGUMENTS_NEEDED, args);

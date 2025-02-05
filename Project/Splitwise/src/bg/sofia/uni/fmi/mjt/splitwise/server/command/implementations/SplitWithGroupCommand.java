@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
@@ -11,8 +10,8 @@ import java.io.PrintWriter;
 
 public class SplitWithGroupCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
-    private Authenticator authenticator;
-    private ExpensesRepository expensesRepository;
+    private final Authenticator authenticator;
+    private final ExpensesRepository expensesRepository;
 
     private static final int AMOUNT_INDEX = 0;
     private static final int GROUP_NAME_INDEX = 1;
@@ -42,7 +41,8 @@ public class SplitWithGroupCommand extends StandardCommand {
                 arguments[GROUP_NAME_INDEX],
                 amount,
                 arguments[REASON_INDEX]);
-        writer.println("Successfully split %s LV with group %s for \"%s\".".formatted(amount, arguments[GROUP_NAME_INDEX], arguments[REASON_INDEX]));
+        writer.println("Successfully split %s LV with group %s for \"%s\"."
+                .formatted(amount, arguments[GROUP_NAME_INDEX], arguments[REASON_INDEX]));
     }
 
     public static CommandHelp help() {
@@ -52,7 +52,8 @@ public class SplitWithGroupCommand extends StandardCommand {
         parameters.addParameter("reason", "the reason for splitting", false);
 
         return new CommandHelp("split-group",
-                "with this command you can mark that a all users owe you an equal amount of money for a specific reason",
+                "with this command you can mark that a all users owe you " +
+                        "an equal amount of money for a specific reason",
                 parameters);
     }
 }

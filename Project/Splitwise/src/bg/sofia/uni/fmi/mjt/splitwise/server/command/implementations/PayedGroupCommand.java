@@ -10,8 +10,8 @@ import java.io.PrintWriter;
 
 public class PayedGroupCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 4;
-    private Authenticator authenticator;
-    private GroupDebtsRepository groupDebtsRepository;
+    private final Authenticator authenticator;
+    private final GroupDebtsRepository groupDebtsRepository;
 
     private static final int AMOUNT_INDEX = 0;
     private static final int USERNAME_INDEX = 1;
@@ -43,7 +43,8 @@ public class PayedGroupCommand extends StandardCommand {
                 arguments[GROUP_NAME_INDEX],
                 amount,
                 arguments[REASON_INDEX]);
-        writer.println("%s payed you %s LV for \"%s\" in group %s.".formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX], arguments[GROUP_NAME_INDEX]));
+        writer.println("%s payed you %s LV for \"%s\" in group %s."
+                .formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX], arguments[GROUP_NAME_INDEX]));
     }
 
     public static CommandHelp help() {
@@ -54,7 +55,8 @@ public class PayedGroupCommand extends StandardCommand {
         parameters.addParameter("reason", "the reason for payment", false);
 
         return new CommandHelp("payed-group",
-                "with this command you can mark that a user paid you a given amount for a loan he has to pay to you in a specific group",
+                "with this command you can mark that a user paid you a given amount for a loan " +
+                        "they have to pay to you in a specific group",
                 parameters);
     }
 }

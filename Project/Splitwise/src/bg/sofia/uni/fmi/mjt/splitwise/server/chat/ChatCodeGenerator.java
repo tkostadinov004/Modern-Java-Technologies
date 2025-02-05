@@ -4,6 +4,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ChatCodeGenerator {
     private static final int ALPHABET_SIZE = 26;
+    private static final int FIRST_PART_SIZE = 3;
+    private static final int SECOND_PART_SIZE = 3;
+    private static final int THIRD_PART_SIZE = 3;
 
     private StringBuilder generateLowercaseSequence(ThreadLocalRandom random, StringBuilder sb, int length) {
         for (int i = 0; i < length; i++) {
@@ -15,9 +18,9 @@ public class ChatCodeGenerator {
     public String generateRandom() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         StringBuilder sb = new StringBuilder();
-        generateLowercaseSequence(random, sb, 3).append('-');
-        generateLowercaseSequence(random, sb, 4).append('-');
-        generateLowercaseSequence(random, sb, 3);
+        generateLowercaseSequence(random, sb, FIRST_PART_SIZE).append('-');
+        generateLowercaseSequence(random, sb, SECOND_PART_SIZE).append('-');
+        generateLowercaseSequence(random, sb, THIRD_PART_SIZE);
         return sb.toString();
     }
 }

@@ -9,9 +9,9 @@ import java.util.Set;
 public interface ExpensesRepository {
     Set<Expense> getExpensesOf(String username);
 
-    void addPersonalBaseExpense(String payerUsername, String participantUsername, double amount, String purpose);
+    void addPersonalBaseExpense(String payerUsername, String participantUsername, double amount, String reason);
 
-    void addGroupExpense(String payerUsername, String groupName, double amount, String purpose);
+    void addGroupExpense(String payerUsername, String groupName, double amount, String reason);
 
     void exportRecent(String username, int count, Writer writer) throws IOException;
 }

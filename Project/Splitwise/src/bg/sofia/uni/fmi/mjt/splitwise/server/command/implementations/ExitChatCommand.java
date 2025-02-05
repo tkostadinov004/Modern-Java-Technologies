@@ -3,25 +3,21 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 
 import java.io.PrintWriter;
 
 public class ExitChatCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 0;
-    private Authenticator authenticator;
-    private ChatToken chatToken;
-    private ChatRepository chatRepository;
+    private final Authenticator authenticator;
+    private final ChatToken chatToken;
 
-    public ExitChatCommand(Authenticator authenticator, ChatToken chatToken, ChatRepository chatRepository, String[] args) {
+    public ExitChatCommand(Authenticator authenticator, ChatToken chatToken, String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.chatToken = chatToken;
-        this.chatRepository = chatRepository;
     }
 
     @Override

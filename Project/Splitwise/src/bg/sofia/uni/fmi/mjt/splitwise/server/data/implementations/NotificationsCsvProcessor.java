@@ -1,25 +1,17 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.NotificationDTO;
 import com.opencsv.CSVReader;
 
-import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Optional;
 import java.util.Set;
 
-public class NotificationsCsvProcessor extends CsvProcessor<Notification> {
-    private final UserRepository userRepository;
-
-    public NotificationsCsvProcessor(UserRepository userRepository, CSVReader reader, String filePath) {
+public class NotificationsCsvProcessor extends CsvProcessor<NotificationDTO> {
+    public NotificationsCsvProcessor(CSVReader reader, String filePath) {
         super(reader, filePath);
-        this.userRepository = userRepository;
     }
 
     private static final int RECEIVER_USERNAME_INDEX = 0;
@@ -27,12 +19,7 @@ public class NotificationsCsvProcessor extends CsvProcessor<Notification> {
     private static final int DATE_INDEX = 2;
     private static final int TYPE_INDEX = 3;
 
-    private Notification parseNotification(String[] args) {
-        Optional<User> receiver = userRepository.getUserByUsername(args[RECEIVER_USERNAME_INDEX]);
-        if (receiver.isEmpty()) {
-            return null;
-        }
-
+    private NotificationDTO parseNotification(String[] args) {
         LocalDateTime date;
         try {
             date = LocalDateTime.parse(args[DATE_INDEX], DATETIME_PARSE_FORMAT);
@@ -47,23 +34,23 @@ public class NotificationsCsvProcessor extends CsvProcessor<Notification> {
             return null;
         }
 
-        return new Notification(receiver.get(), args[CONTENT_INDEX], date, type);
+        return new NotificationDTO(args[RECEIVER_USERNAME_INDEX], args[CONTENT_INDEX], date, type);
     }
 
     @Override
-    public Set<Notification> readAll() {
+    public Set<NotificationDTO> readAll() {
         return super.readAll(this::parseNotification);
     }
 
-    private String serializeNotification(Notification notification) {
+    private String serializeNotification(NotificationDTO notification) {
         return "\"%s\",\"%s\",\"%s\",\"%s\""
-                .formatted(notification.receiver().username(), notification.content(),
+                .formatted(notification.receiverUsername(), notification.content(),
                         DATETIME_PARSE_FORMAT.format(notification.timeSent()),
                         notification.type().name());
     }
 
     @Override
-    public synchronized void writeToFile(Notification obj) {
+    public synchronized void writeToFile(NotificationDTO obj) {
         super.writeToFile(obj, this::serializeNotification);
     }
 }

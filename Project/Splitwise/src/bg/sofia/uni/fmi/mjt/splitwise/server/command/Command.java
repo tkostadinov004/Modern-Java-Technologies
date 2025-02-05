@@ -1,7 +1,5 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
-
 import java.io.PrintWriter;
 
 public abstract class Command {

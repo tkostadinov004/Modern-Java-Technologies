@@ -8,7 +8,8 @@ public abstract class StandardCommand extends Command {
     @Override
     protected void setArguments(int argumentsNeeded, String[] args) {
         if (args.length != argumentsNeeded) {
-            throw new IllegalArgumentException("Invalid argument count! Expected %s but was %s.".formatted(argumentsNeeded, args.length));
+            throw new IllegalArgumentException("Invalid argument count! Expected %s but was %s."
+                    .formatted(argumentsNeeded, args.length));
         }
         this.arguments = args;
     }

@@ -1,9 +1,9 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.help;
 
 public class ParameterHelp {
-    private String name;
-    private String description;
-    private boolean isOptional;
+    private final String name;
+    private final String description;
+    private final boolean isOptional;
 
     public ParameterHelp(String name, String description, boolean isOptional) {
         this.name = name;

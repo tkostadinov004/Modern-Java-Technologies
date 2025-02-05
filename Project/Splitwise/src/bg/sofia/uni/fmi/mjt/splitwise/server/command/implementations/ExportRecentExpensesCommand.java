@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
@@ -13,10 +12,12 @@ import java.io.PrintWriter;
 
 public class ExportRecentExpensesCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 2;
-    private Authenticator authenticator;
-    private ExpensesRepository expensesRepository;
+    private final Authenticator authenticator;
+    private final ExpensesRepository expensesRepository;
 
-    public ExportRecentExpensesCommand(Authenticator authenticator, ExpensesRepository expensesRepository, String[] args) {
+    public ExportRecentExpensesCommand(Authenticator authenticator,
+                                       ExpensesRepository expensesRepository,
+                                       String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.expensesRepository = expensesRepository;

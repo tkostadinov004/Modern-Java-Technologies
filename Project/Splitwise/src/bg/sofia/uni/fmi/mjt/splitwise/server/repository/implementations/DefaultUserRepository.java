@@ -3,15 +3,15 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.Hasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyRegisteredException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,8 +21,8 @@ public class DefaultUserRepository implements UserRepository {
     private final Set<User> users;
     private final Map<String, Socket> userSockets;
 
-    public DefaultUserRepository(CsvProcessor<User> csvProcessor) {
-        this.csvProcessor = csvProcessor;
+    public DefaultUserRepository(DependencyContainer dependencyContainer) {
+        this.csvProcessor = dependencyContainer.get(UserCsvProcessor.class);
         this.users = csvProcessor.readAll();
         this.userSockets = new HashMap<>();
     }
@@ -60,13 +60,14 @@ public class DefaultUserRepository implements UserRepository {
     @Override
     public void bindSocketToUser(String username, Socket socket) {
         if (!containsUser(username)) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
         userSockets.put(username, socket);
     }
 
-    private void validateUser(String username, String password, String firstName, String lastName) {
+    @Override
+    public void registerUser(String username, String password, String firstName, String lastName) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
@@ -79,11 +80,7 @@ public class DefaultUserRepository implements UserRepository {
         if (lastName == null || lastName.isEmpty() || lastName.isBlank()) {
             throw new IllegalArgumentException("Last name cannot be null, blank or empty!");
         }
-    }
 
-    @Override
-    public void registerUser(String username, String password, String firstName, String lastName) {
-        validateUser(username, password, firstName, lastName);
         if (containsUser(username)) {
             throw new AlreadyRegisteredException("A user with this username is already registered!");
         }

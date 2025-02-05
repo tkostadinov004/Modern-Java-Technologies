@@ -1,38 +1,50 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.NotificationsCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.FriendshipRelationDTO;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.NotificationDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DefaultNotificationsRepository implements NotificationsRepository {
-    private final CsvProcessor<Notification> csvProcessor;
+    private final CsvProcessor<NotificationDTO> csvProcessor;
     private final UserRepository userRepository;
     private final Map<User, Set<Notification>> notificationsMap;
 
-    private Map<User, Set<Notification>> populateNotificationsMap() {
-        Set<Notification> notifications = csvProcessor.readAll();
-        return notifications
-                .stream()
-                .collect(Collectors.groupingBy(not -> not.receiver(), Collectors.mapping(rel -> rel, Collectors.toSet())));
+    private Notification createFromDTO(NotificationDTO dto) {
+        Optional<User> receiver = userRepository.getUserByUsername(dto.receiverUsername());
+        if (receiver.isEmpty()) {
+            return null;
+        }
+        return new Notification(receiver.get(), dto.content(), dto.timeSent(), dto.type());
     }
 
-    public DefaultNotificationsRepository(CsvProcessor<Notification> csvProcessor, UserRepository userRepository) {
-        this.csvProcessor = csvProcessor;
-        this.userRepository = userRepository;
+    private Map<User, Set<Notification>> populateNotificationsMap() {
+        return csvProcessor
+                .readAll()
+                .stream()
+                .map(this::createFromDTO)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(Notification::receiver,
+                        Collectors.mapping(rel -> rel, Collectors.toSet())));
+    }
+
+    public DefaultNotificationsRepository(DependencyContainer dependencyContainer) {
+        this.csvProcessor = dependencyContainer.get(NotificationsCsvProcessor.class);
+        this.userRepository = dependencyContainer.get(UserRepository.class);
         this.notificationsMap = populateNotificationsMap();
     }
 
@@ -44,7 +56,7 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
         if (!notificationsMap.containsKey(user.get())) {
@@ -54,7 +66,10 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
     }
 
     @Override
-    public void addNotificationForUser(String username, String notificationContent, LocalDateTime timeSent, NotificationType type) {
+    public void addNotificationForUser(String username,
+                                       String notificationContent,
+                                       LocalDateTime timeSent,
+                                       NotificationType type) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
@@ -67,14 +82,14 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
         notificationsMap.putIfAbsent(user.get(), new LinkedHashSet<>());
 
         Notification notification = new Notification(user.get(), notificationContent, timeSent, type);
         notificationsMap.get(user.get()).add(notification);
-        csvProcessor.writeToFile(notification);
+        csvProcessor.writeToFile(new NotificationDTO(username, notificationContent, timeSent, type));
     }
 
     @Override
@@ -85,9 +100,9 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
-            throw new NonExistingUserException("User with username %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
         notificationsMap.remove(user.get());
-        csvProcessor.remove(notification -> notification.receiver().username().equals(username));
+        csvProcessor.remove(notification -> notification.receiverUsername().equals(username));
     }
 }

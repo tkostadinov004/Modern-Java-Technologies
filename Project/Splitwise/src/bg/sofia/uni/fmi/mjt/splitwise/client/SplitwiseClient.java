@@ -7,31 +7,22 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class SplitwiseClient {
+    private static final String HOST = "localhost";
+    private static final int PORT = 12345;
+
     public static void main(String[] args) {
-        try (Socket socket = new Socket("localhost", 12345);
+        try (Socket socket = new Socket(HOST, PORT);
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
+             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+             ScheduledExecutorService executor =
+                     Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory())) {
 
-            System.out.println(socket.getInetAddress() + " "  + socket.getLocalPort());
-
-            var executor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory());
-            executor.scheduleAtFixedRate(() -> {
-                try {
-                    if (!reader.ready()) {
-                        return;
-                    }
-
-                    String line;
-                    while ((line = reader.readLine()) != null && !line.equals("$end$")) {
-                        System.out.println(line);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }, 0, 2, TimeUnit.SECONDS);
+            executor.scheduleAtFixedRate(new OutputFetcher(reader),
+                    0, 1, TimeUnit.SECONDS);
 
             Scanner sc = new Scanner(System.in);
             while (true) {
@@ -41,14 +32,9 @@ public class SplitwiseClient {
                 }
 
                 writer.println(message);
-
-                String line;
-                while ((line = reader.readLine()) != null && !line.equals("$end$")) {
-                    System.out.println(line);
-                }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Unexpected connection error!");
         }
     }
 }

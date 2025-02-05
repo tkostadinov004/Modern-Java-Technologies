@@ -1,13 +1,10 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.data;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.ExpensesCsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.Expense;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;

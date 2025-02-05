@@ -4,31 +4,33 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authen
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.NotAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 
 import java.io.PrintWriter;
 
 public class JoinChatCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 1;
-    private Authenticator authenticator;
-    private ChatToken chatToken;
-    private ChatRepository chatRepository;
+    private final Authenticator authenticator;
+    private final ChatToken chatToken;
 
-    public JoinChatCommand(Authenticator authenticator, ChatToken chatToken, ChatRepository chatRepository, String[] args) {
+    public JoinChatCommand(Authenticator authenticator,
+                           ChatToken chatToken,
+                           String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.chatToken = chatToken;
-        this.chatRepository = chatRepository;
     }
 
     private static final int CHAT_CODE_INDEX = 0;
 
     @Override
     public void execute(PrintWriter writer) {
+        if (!authenticator.isAuthenticated()) {
+            writer.println("You have to be logged in!");
+            return;
+        }
         if (chatToken.isInChat()) {
             writer.println("You are already connected to a chat! Leave it before you join a new one!");
             return;

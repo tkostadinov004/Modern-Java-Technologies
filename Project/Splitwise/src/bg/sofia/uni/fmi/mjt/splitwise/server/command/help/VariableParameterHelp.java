@@ -1,15 +1,11 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.help;
 
 public class VariableParameterHelp extends ParameterHelp {
-    private int minAmount;
+    private final int minAmount;
 
     public VariableParameterHelp(String name, String description, int minAmount, boolean isOptional) {
         super(name, description, isOptional);
         this.minAmount = minAmount;
-    }
-
-    public int getMinAmount() {
-        return minAmount;
     }
 
     @Override

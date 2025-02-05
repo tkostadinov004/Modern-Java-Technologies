@@ -1,19 +1,17 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 
 import java.io.PrintWriter;
 
 public class SplitCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
-    private Authenticator authenticator;
-    private ExpensesRepository expensesRepository;
+    private final Authenticator authenticator;
+    private final ExpensesRepository expensesRepository;
 
     private static final int AMOUNT_INDEX = 0;
     private static final int USERNAME_INDEX = 1;
@@ -43,7 +41,8 @@ public class SplitCommand extends StandardCommand {
                 arguments[USERNAME_INDEX],
                 amount,
                 arguments[REASON_INDEX]);
-        writer.println("Successfully split %s LV with %s for \"%s\".".formatted(amount, arguments[USERNAME_INDEX], arguments[REASON_INDEX]));
+        writer.println("Successfully split %s LV with %s for \"%s\"."
+                .formatted(amount, arguments[USERNAME_INDEX], arguments[REASON_INDEX]));
     }
 
     public static CommandHelp help() {

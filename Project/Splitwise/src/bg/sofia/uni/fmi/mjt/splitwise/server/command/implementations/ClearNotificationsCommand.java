@@ -10,10 +10,12 @@ import java.io.PrintWriter;
 
 public class ClearNotificationsCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 0;
-    private Authenticator authenticator;
-    private NotificationsRepository notificationsRepository;
+    private final Authenticator authenticator;
+    private final NotificationsRepository notificationsRepository;
 
-    public ClearNotificationsCommand(Authenticator authenticator, NotificationsRepository notificationsRepository, String[] args) {
+    public ClearNotificationsCommand(Authenticator authenticator,
+                                     NotificationsRepository notificationsRepository,
+                                     String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.notificationsRepository = notificationsRepository;

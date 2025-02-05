@@ -2,20 +2,13 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.PersonalDebtDTO;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import com.opencsv.CSVReader;
 
-import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Set;
 
 public class PersonalDebtsCsvProcessor extends CsvProcessor<PersonalDebtDTO> {
-    private final UserRepository userRepository;
-
-    public PersonalDebtsCsvProcessor(UserRepository userRepository, CSVReader reader, String filePath) {
+    public PersonalDebtsCsvProcessor(CSVReader reader, String filePath) {
         super(reader, filePath);
-        this.userRepository = userRepository;
     }
 
     private static final int DEBTOR_USERNAME_INDEX = 0;
@@ -24,16 +17,6 @@ public class PersonalDebtsCsvProcessor extends CsvProcessor<PersonalDebtDTO> {
     private static final int REASON_INDEX = 3;
 
     private PersonalDebtDTO parsePersonalDebt(String[] args) {
-        Optional<User> debtor = userRepository.getUserByUsername(args[DEBTOR_USERNAME_INDEX]);
-        if (debtor.isEmpty()) {
-            return null;
-        }
-
-        Optional<User> recipient = userRepository.getUserByUsername(args[RECIPIENT_USERNAME_INDEX]);
-        if (recipient.isEmpty()) {
-            return null;
-        }
-
         double amount;
         try {
             amount = Double.parseDouble(args[AMOUNT_INDEX]);
@@ -41,7 +24,10 @@ public class PersonalDebtsCsvProcessor extends CsvProcessor<PersonalDebtDTO> {
             return null;
         }
 
-        return new PersonalDebtDTO(debtor.get(), recipient.get(), amount, args[REASON_INDEX]);
+        return new PersonalDebtDTO(args[DEBTOR_USERNAME_INDEX],
+                args[RECIPIENT_USERNAME_INDEX],
+                amount,
+                args[REASON_INDEX]);
     }
 
     @Override
@@ -51,8 +37,8 @@ public class PersonalDebtsCsvProcessor extends CsvProcessor<PersonalDebtDTO> {
 
     private String serializePersonalDebt(PersonalDebtDTO debt) {
         return "\"%s\",\"%s\",\"%s\",\"%s\""
-                .formatted(debt.debtor().username(),
-                        debt.recipient().username(),
+                .formatted(debt.debtorUsername(),
+                        debt.recipientUsername(),
                         debt.amount(), debt.reason());
     }
 

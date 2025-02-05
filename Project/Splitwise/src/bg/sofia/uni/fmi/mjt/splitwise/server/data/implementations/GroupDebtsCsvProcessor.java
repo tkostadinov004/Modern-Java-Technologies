@@ -2,24 +2,13 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.GroupDebtDTO;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import com.opencsv.CSVReader;
 
-import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Set;
 
 public class GroupDebtsCsvProcessor extends CsvProcessor<GroupDebtDTO> {
-    private final UserRepository userRepository;
-    private final FriendGroupRepository friendGroupRepository;
-
-    public GroupDebtsCsvProcessor(UserRepository userRepository, FriendGroupRepository friendGroupRepository, CSVReader reader, String filePath) {
+    public GroupDebtsCsvProcessor(CSVReader reader, String filePath) {
         super(reader, filePath);
-        this.userRepository = userRepository;
-        this.friendGroupRepository = friendGroupRepository;
     }
 
     private static final int DEBTOR_USERNAME_INDEX = 0;
@@ -29,21 +18,6 @@ public class GroupDebtsCsvProcessor extends CsvProcessor<GroupDebtDTO> {
     private static final int REASON_INDEX = 4;
 
     private GroupDebtDTO parseGroupDebt(String[] args) {
-        Optional<User> debtor = userRepository.getUserByUsername(args[DEBTOR_USERNAME_INDEX]);
-        if (debtor.isEmpty()) {
-            return null;
-        }
-
-        Optional<User> recipient = userRepository.getUserByUsername(args[RECIPIENT_USERNAME_INDEX]);
-        if (recipient.isEmpty()) {
-            return null;
-        }
-
-        Optional<FriendGroup> group = friendGroupRepository.getGroup(args[GROUP_INDEX]);
-        if (group.isEmpty()) {
-            return null;
-        }
-
         double amount;
         try {
             amount = Double.parseDouble(args[AMOUNT_INDEX]);
@@ -51,7 +25,11 @@ public class GroupDebtsCsvProcessor extends CsvProcessor<GroupDebtDTO> {
             return null;
         }
 
-        return new GroupDebtDTO(debtor.get(), recipient.get(), group.get(), amount, args[REASON_INDEX]);
+        return new GroupDebtDTO(args[DEBTOR_USERNAME_INDEX],
+                args[RECIPIENT_USERNAME_INDEX],
+                args[GROUP_INDEX],
+                amount,
+                args[REASON_INDEX]);
     }
 
     @Override
@@ -61,10 +39,11 @@ public class GroupDebtsCsvProcessor extends CsvProcessor<GroupDebtDTO> {
 
     private String serializePersonalDebt(GroupDebtDTO debt) {
         return "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\""
-                .formatted(debt.debtor().username(),
-                        debt.recipient().username(),
-                        debt.group().name(),
-                        debt.amount(), debt.reason());
+                .formatted(debt.debtorUsername(),
+                        debt.recipientUsername(),
+                        debt.groupName(),
+                        debt.amount(),
+                        debt.reason());
     }
 
     @Override

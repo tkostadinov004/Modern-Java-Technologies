@@ -1,10 +1,8 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.VariableArgumentsCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
-import org.apache.commons.logging.Log;
 
 import java.io.PrintWriter;
 
@@ -15,7 +13,7 @@ public class HelpCommand extends VariableArgumentsCommand {
         super(ARGUMENTS_NEEDED, args);
     }
 
-    private CommandHelp getSpecificCommandInfo(String commandName, PrintWriter writer) {
+    private CommandHelp getSpecificCommandInfo(String commandName) {
         return switch (commandName) {
             case "login" -> LoginCommand.help();
             case "register" -> RegisterCommand.help();
@@ -63,7 +61,7 @@ public class HelpCommand extends VariableArgumentsCommand {
     @Override
     public void execute(PrintWriter writer) {
         if (arguments.length > 0) {
-            writer.println(getSpecificCommandInfo(arguments[0], writer));
+            writer.println(getSpecificCommandInfo(arguments[0]));
         } else {
             printCommandList(writer);
         }
@@ -74,7 +72,8 @@ public class HelpCommand extends VariableArgumentsCommand {
         parameters.addParameter("command-name", "the name of the command you want to know more about", true);
 
         return new CommandHelp("help",
-                "prints a list of all commands, their descriptions, and parameters, or prints the details of a specific command if it's included",
+                "prints a list of all commands, their descriptions, and parameters, " +
+                        "or prints the details of a specific command if it's included",
                 parameters);
     }
 }

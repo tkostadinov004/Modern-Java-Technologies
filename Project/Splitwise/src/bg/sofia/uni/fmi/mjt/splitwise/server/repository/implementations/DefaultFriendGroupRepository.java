@@ -1,32 +1,59 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.FriendGroupsCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.FriendGroupDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.FriendGroupException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.GroupAlreadyExistsException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DefaultFriendGroupRepository implements FriendGroupRepository {
-    private final CsvProcessor<FriendGroup> csvProcessor;
+    private final CsvProcessor<FriendGroupDTO> csvProcessor;
     private final UserRepository userRepository;
-    private final UserFriendsRepository userFriendsRepository;
     private final Set<FriendGroup> friendGroups;
 
-    public DefaultFriendGroupRepository(CsvProcessor<FriendGroup> csvProcessor, UserRepository userRepository, UserFriendsRepository userFriendsRepository) {
-        this.csvProcessor = csvProcessor;
-        this.userRepository = userRepository;
-        this.userFriendsRepository = userFriendsRepository;
-        this.friendGroups = csvProcessor.readAll();
+    private FriendGroup createFromDTO(FriendGroupDTO dto) {
+        try {
+            Set<User> participants = dto
+                    .participantsUsernames()
+                    .stream().map(username -> {
+                        Optional<User> user = userRepository.getUserByUsername(username);
+                        if (user.isEmpty()) {
+                            throw new IllegalArgumentException();
+                        }
+                        return user.get();
+                    }).collect(Collectors.toSet());
+            return new FriendGroup(dto.name(), participants);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private Set<FriendGroup> populateFriendGroups() {
+        return csvProcessor
+                .readAll()
+                .stream()
+                .map(this::createFromDTO)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    public DefaultFriendGroupRepository(DependencyContainer dependencyContainer) {
+        this.csvProcessor = dependencyContainer.get(FriendGroupsCsvProcessor.class);
+        this.userRepository = dependencyContainer.get(UserRepository.class);
+        this.friendGroups = populateFriendGroups();
     }
 
     @Override
@@ -37,7 +64,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
-            throw new NonExistingUserException("User with name %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with name %s does not exist!".formatted(username));
         }
 
         return friendGroups
@@ -78,7 +105,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
-            throw new NonExistingUserException("User with name %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with name %s does not exist!".formatted(username));
         }
 
         Optional<FriendGroup> group = getGroup(groupName);
@@ -103,23 +130,19 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
         if (containsGroupByName(groupName)) {
             throw new GroupAlreadyExistsException("Group with name %s already exists!".formatted(groupName));
         }
-        Set<String> nonExistingUsers = new HashSet<>();
         Set<User> users = friendsUsernames.stream()
                 .map(username -> {
                     Optional<User> user = userRepository.getUserByUsername(username);
                     if (user.isEmpty()) {
-                        nonExistingUsers.add(username);
+                        throw new NonExistentUserException("User with username %s does not exist!"
+                                .formatted(username));
                     }
                     return user.get();
                 }).collect(Collectors.toCollection(HashSet::new));
 
         FriendGroup group = new FriendGroup(groupName, users);
         friendGroups.add(group);
-        csvProcessor.writeToFile(group);
-        if (!nonExistingUsers.isEmpty()) {
-            throw new NonExistingUserException("Users with usernames %s do not exist, therefore they're not included in the group"
-                            .formatted(String.join(", ", nonExistingUsers)));
-        }
+        csvProcessor.writeToFile(new FriendGroupDTO(groupName, friendsUsernames));
     }
 
     @Override
@@ -133,7 +156,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
-            throw new NonExistingUserException("User with name %s does not exist!".formatted(username));
+            throw new NonExistentUserException("User with name %s does not exist!".formatted(username));
         }
 
         Optional<FriendGroup> group = getGroup(groupName);
@@ -146,7 +169,8 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
                     .formatted(user.get().username(), group.get().name()));
         }
         csvProcessor.modify(g -> g.name().equals(groupName),
-                group.get());
+                new FriendGroupDTO(groupName,
+                        group.get().participants().stream().map(User::username).collect(Collectors.toSet())));
     }
 
     @Override
@@ -160,7 +184,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(groupName));
         }
 
-        if (!friendGroups.remove(group)) {
+        if (!friendGroups.remove(group.get())) {
             throw new NonExistingGroupException("Group with name %s does not exist!".formatted(group.get().name()));
         }
         csvProcessor.remove(g -> g.name().equals(groupName));

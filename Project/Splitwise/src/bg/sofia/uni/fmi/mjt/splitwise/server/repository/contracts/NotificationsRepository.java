@@ -9,7 +9,10 @@ import java.util.Set;
 public interface NotificationsRepository {
     Set<Notification> getNotificationForUser(String username);
 
-    void addNotificationForUser(String username, String notificationContent, LocalDateTime timeSent, NotificationType type);
+    void addNotificationForUser(String username,
+                                String notificationContent,
+                                LocalDateTime timeSent,
+                                NotificationType type);
 
     void removeAllNotificationsForUser(String username);
 }

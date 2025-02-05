@@ -5,7 +5,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Defaul
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.DefaultChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.CommandFactory;
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.DataFilePaths;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.ExpensesCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.FriendGroupsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.GroupDebtsCsvProcessor;
@@ -13,6 +13,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.NotificationsC
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.PersonalDebtsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserFriendsCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
@@ -32,70 +33,129 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultU
 import com.opencsv.CSVReader;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
 
 public class SplitwiseServer {
     private static final String HOST = "localhost";
+    private static final String LOGS_DIRECTORY = "logs";
     private static final int PORT = 12345;
+    private static final int MAX_CLIENTS = 1024;
+    private final DependencyContainer dependencyContainer;
+    private final ExecutorService executorService;
+
+    public SplitwiseServer() {
+        dependencyContainer = new DependencyContainer();
+        executorService = Executors.newFixedThreadPool(MAX_CLIENTS);
+    }
+
+    private FileHandler getLoggerHandler() {
+        try {
+            File dir = new File(LOGS_DIRECTORY);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            SimpleDateFormat format = new SimpleDateFormat("M-d_HHmmss");
+            return new FileHandler("logs/log"
+                    + format.format(Calendar.getInstance().getTime()) + ".log");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void handleFiles() throws IOException {
+        File dir = new File(DataFilePaths.DIRECTORY);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        new File(DataFilePaths.USERS_PATH).createNewFile();
+        new File(DataFilePaths.USERS_FRIENDS_PATH).createNewFile();
+        new File(DataFilePaths.NOTIFICATIONS_PATH).createNewFile();
+        new File(DataFilePaths.PERSONAL_DEBTS_PATH).createNewFile();
+        new File(DataFilePaths.FRIEND_GROUPS_PATH).createNewFile();
+        new File(DataFilePaths.GROUP_DEBTS_PATH).createNewFile();
+        new File(DataFilePaths.EXPENSES_PATH).createNewFile();
+    }
+
+    private void registerCSVProcessors() throws FileNotFoundException {
+        UserCsvProcessor userCsvProcessor =
+                new UserCsvProcessor(new CSVReader(new FileReader(DataFilePaths.USERS_PATH)), DataFilePaths.USERS_PATH);
+        UserFriendsCsvProcessor userFriendsCsvProcessor = new UserFriendsCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.USERS_FRIENDS_PATH)), DataFilePaths.USERS_FRIENDS_PATH);
+        PersonalDebtsCsvProcessor personalDebtsCsvProcessor = new PersonalDebtsCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.PERSONAL_DEBTS_PATH)), DataFilePaths.PERSONAL_DEBTS_PATH);
+        NotificationsCsvProcessor notificationCsvProcessor = new NotificationsCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.NOTIFICATIONS_PATH)), DataFilePaths.NOTIFICATIONS_PATH);
+        GroupDebtsCsvProcessor groupDebtDTOCsvProcessor = new GroupDebtsCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.GROUP_DEBTS_PATH)), DataFilePaths.GROUP_DEBTS_PATH);
+        FriendGroupsCsvProcessor friendGroupCsvProcessor = new FriendGroupsCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.FRIEND_GROUPS_PATH)), DataFilePaths.FRIEND_GROUPS_PATH);
+        ExpensesCsvProcessor expenseCsvProcessor = new ExpensesCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.EXPENSES_PATH)), DataFilePaths.EXPENSES_PATH);
+        dependencyContainer.register(UserCsvProcessor.class, userCsvProcessor)
+                .register(UserFriendsCsvProcessor.class, userFriendsCsvProcessor)
+                .register(PersonalDebtsCsvProcessor.class, personalDebtsCsvProcessor)
+                .register(NotificationsCsvProcessor.class, notificationCsvProcessor)
+                .register(GroupDebtsCsvProcessor.class, groupDebtDTOCsvProcessor)
+                .register(FriendGroupsCsvProcessor.class, friendGroupCsvProcessor)
+                .register(ExpensesCsvProcessor.class, expenseCsvProcessor);
+    }
+
+    private void registerRepositories() {
+        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        dependencyContainer.register(UserRepository.class, userRepository);
+        UserFriendsRepository userFriendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        dependencyContainer.register(UserFriendsRepository.class, userFriendsRepository);
+        NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
+        dependencyContainer.register(NotificationsRepository.class, notificationsRepository);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        dependencyContainer.register(PersonalDebtsRepository.class, personalDebtsRepository);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        dependencyContainer.register(FriendGroupRepository.class, friendGroupRepository);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        dependencyContainer.register(GroupDebtsRepository.class, groupDebtsRepository);
+        ExpensesRepository expensesRepository = new DefaultExpensesRepository(dependencyContainer);
+        dependencyContainer.register(ExpensesRepository.class, expensesRepository);
+    }
 
     public void start() {
+        Logger logger = Logger.getLogger(SplitwiseServer.class.getName());
+        logger.addHandler(getLoggerHandler());
+        dependencyContainer.register(Logger.class, logger);
+
         while (true) {
             try (ServerSocket serverSocket = new ServerSocket()) {
                 serverSocket.bind(new InetSocketAddress(HOST, PORT));
-                File users = new File("users.csv");
-                if (!users.exists()) {
-                    users.createNewFile();
-                }
-                File userFriends = new File("user-friends.csv");
-                if (!userFriends.exists()) {
-                    userFriends.createNewFile();
-                }
-                File notifications = new File("notifications.csv");
-                if (!notifications.exists()) {
-                    notifications.createNewFile();
-                }
-                File personalDebts = new File("personal-debts.csv");
-                if (!personalDebts.exists()) {
-                    personalDebts.createNewFile();
-                }
-                File friendGroups = new File("friend-groups.csv");
-                if (!friendGroups.exists()) {
-                    friendGroups.createNewFile();
-                }
-                File groupDebts = new File("group-debts.csv");
-                if (!groupDebts.exists()) {
-                    groupDebts.createNewFile();
-                }
-                File expenses = new File("expenses.csv");
-                if (!expenses.exists()) {
-                    expenses.createNewFile();
-                }
 
-
-                UserRepository userRepository = new DefaultUserRepository(new UserCsvProcessor(new CSVReader(new FileReader("users.csv")), "users.csv"));
-                UserFriendsRepository userFriendsRepository = new DefaultUserFriendsRepository(new UserFriendsCsvProcessor(userRepository, new CSVReader(new FileReader("user-friends.csv")), "user-friends.csv"), userRepository);
-                NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(new NotificationsCsvProcessor(userRepository, new CSVReader(new FileReader("notifications.csv")), "notifications.csv"), userRepository);
-                PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(new PersonalDebtsCsvProcessor(userRepository, new CSVReader(new FileReader("personal-debts.csv")), "personal-debts.csv"), userRepository, notificationsRepository);
-                FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(new FriendGroupsCsvProcessor(userRepository, new CSVReader(new FileReader("friend-groups.csv")), "friend-groups.csv"), userRepository, userFriendsRepository);
-                GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(new GroupDebtsCsvProcessor(userRepository, friendGroupRepository, new CSVReader(new FileReader("group-debts.csv")), "group-debts.csv"), userRepository, friendGroupRepository, notificationsRepository);
-                ExpensesRepository expensesRepository = new DefaultExpensesRepository(new ExpensesCsvProcessor(userRepository, new CSVReader(new FileReader("expenses.csv")), "expenses.csv"), userRepository, friendGroupRepository, personalDebtsRepository, groupDebtsRepository, notificationsRepository);
-                ChatRepository chatRepository = new DefaultChatRepository(new InetSocketAddress(serverSocket.getInetAddress(), PORT), userRepository);
+                handleFiles();
+                registerCSVProcessors();
+                registerRepositories();
+                InetSocketAddress address = new InetSocketAddress(serverSocket.getInetAddress(), PORT);
+                dependencyContainer
+                        .register(ChatRepository.class, new DefaultChatRepository(dependencyContainer, address));
 
                 while (true) {
                     Socket client = serverSocket.accept();
-                    Authenticator authenticator = new DefaultAuthenticator(userRepository, client);
-                    ChatToken chatToken = new DefaultChatToken(authenticator, userRepository, chatRepository);
-                    CommandFactory commandFactory = new CommandFactory(authenticator, chatToken, chatRepository, expensesRepository, friendGroupRepository, groupDebtsRepository, notificationsRepository, personalDebtsRepository, userFriendsRepository, userRepository);
-                    new Thread(() -> new ClientRequestHandler(client, commandFactory).run()).start();
+                    Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, client);
+                    ChatToken chatToken = new DefaultChatToken(dependencyContainer, authenticator);
+                    CommandFactory commandFactory = new CommandFactory(dependencyContainer, authenticator, chatToken);
+                    executorService.execute(() ->
+                            new ClientRequestHandler(dependencyContainer, client, commandFactory).run());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                logger.severe(e.getMessage());
             }
         }
     }

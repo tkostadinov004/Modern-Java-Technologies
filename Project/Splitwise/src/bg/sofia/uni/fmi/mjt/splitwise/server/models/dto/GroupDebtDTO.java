@@ -1,7 +1,8 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.models.dto;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-
-public record GroupDebtDTO(User debtor, User recipient, FriendGroup group, double amount, String reason) {
+public record GroupDebtDTO(String debtorUsername,
+                           String recipientUsername,
+                           String groupName,
+                           double amount,
+                           String reason) {
 }
