@@ -20,8 +20,8 @@ public class VariableParameterHelp extends ParameterHelp {
                     .append(super.description())
                     .append(System.lineSeparator());
         }
-        sb.append("...").append(System.lineSeparator());
-        sb.append(super.isOptional() ? "OPTIONAL: " : "")
+        sb.append("\t* ").append("...").append(System.lineSeparator());
+        sb.append("\t* ").append(super.isOptional() ? "OPTIONAL: " : "")
                 .append(super.name())
                 .append("N - ")
                 .append(super.description());

@@ -44,6 +44,7 @@ public class ExportRecentExpensesCommand extends StandardCommand {
             expensesRepository.exportRecent(authenticator.getAuthenticatedUser().username(),
                     count,
                     new FileWriter(arguments[FILENAME_INDEX]));
+            writer.println("Successfully exported expenses to file %s".formatted(arguments[FILENAME_INDEX]));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

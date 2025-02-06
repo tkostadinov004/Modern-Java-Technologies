@@ -14,5 +14,9 @@ public interface NotificationsRepository {
                                 LocalDateTime timeSent,
                                 NotificationType type);
 
+    void addNotificationForUser(String username,
+                                String notificationContent,
+                                NotificationType type);
+
     void removeAllNotificationsForUser(String username);
 }

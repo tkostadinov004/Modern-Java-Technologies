@@ -38,6 +38,7 @@ public class JoinChatCommand extends StandardCommand {
 
         try {
             chatToken.joinChat(arguments[CHAT_CODE_INDEX]);
+            writer.println("Successfully joined chat!");
         } catch (ChatException e) {
             writer.println(e.getMessage());
         } catch (NotAuthenticatedException e) {

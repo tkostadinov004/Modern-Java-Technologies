@@ -4,8 +4,11 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 
 import java.net.Socket;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserRepository {
+    Set<User> getAllUsers();
+
     boolean containsUser(String username);
 
     Optional<User> getUserByUsername(String username);

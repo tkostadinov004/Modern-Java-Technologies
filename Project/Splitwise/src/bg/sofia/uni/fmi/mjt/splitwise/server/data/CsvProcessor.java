@@ -4,6 +4,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +50,7 @@ public abstract class CsvProcessor<T> {
     public abstract Set<T> readAll();
 
     protected synchronized void writeToFile(T obj, Function<T, String> mappingFunction) {
+        data.add(obj);
         try (BufferedWriter writer = Files.newBufferedWriter(Path.of(filePath), StandardOpenOption.APPEND)) {
             String content = mappingFunction.apply(obj);
             writer.write(content);
@@ -73,11 +75,14 @@ public abstract class CsvProcessor<T> {
 
         try {
             Files.deleteIfExists(Path.of(filePath));
+            if (validObjects.isEmpty()) {
+                new File(filePath).createNewFile();
+            } else {
+                validObjects.forEach(this::writeToFile);
+            }
         } catch (IOException e) {
-            //throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
-
-        validObjects.forEach(this::writeToFile);
     }
 
     public synchronized void modify(Predicate<T> predicate, T newValue) {
@@ -96,5 +101,13 @@ public abstract class CsvProcessor<T> {
         }
 
         data.forEach(this::writeToFile);
+    }
+
+    public synchronized boolean contains(T obj) {
+        return data.contains(obj);
+    }
+
+    public synchronized boolean contains(Predicate<T> predicate) {
+        return data.stream().anyMatch(predicate);
     }
 }

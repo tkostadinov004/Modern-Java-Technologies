@@ -12,11 +12,5 @@ public interface FriendGroupRepository {
 
     boolean containsGroupByName(String groupName);
 
-    boolean isInGroup(String username, String groupName);
-
     void createGroup(String groupName, Set<String> friendsUsernames);
-
-    void removeFromGroup(String username, String groupName);
-
-    void removeGroup(String groupName);
 }

@@ -10,10 +10,11 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRep
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyFriendsException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.UserFriendsConverter;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,38 +22,20 @@ import java.util.stream.Collectors;
 public class DefaultUserFriendsRepository implements UserFriendsRepository {
     private final CsvProcessor<FriendshipRelationDTO> csvProcessor;
     private final UserRepository userRepository;
-    private final Map<User, Set<User>> friendMap; 
-
-    private FriendshipRelation createFromDTO(FriendshipRelationDTO dto) {
-        Optional<User> first = userRepository.getUserByUsername(dto.firstUsername());
-        if (first.isEmpty()) {
-            return null;
-        }
-        Optional<User> second = userRepository.getUserByUsername(dto.secondUsername());
-        if (second.isEmpty()) {
-            return null;
-        }
-        return new FriendshipRelation(first.get(), second.get());
-    }
-
-    private Map<User, Set<User>> populateFriendMap() {
-        return csvProcessor
-                .readAll()
-                .stream()
-                .map(this::createFromDTO)
-                .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(rel -> rel.first(),
-                        Collectors.mapping(rel -> rel.second(), Collectors.toSet())));
-    }
+    private final Map<User, Set<User>> friendMap;
 
     public DefaultUserFriendsRepository(DependencyContainer dependencyContainer) {
         this.csvProcessor = dependencyContainer.get(UserFriendsCsvProcessor.class);
         this.userRepository = dependencyContainer.get(UserRepository.class);
-        this.friendMap = populateFriendMap();
+
+        DataConverter<Map<User, Set<User>>, FriendshipRelation, FriendshipRelationDTO> converter =
+                new UserFriendsConverter(csvProcessor, userRepository);
+        this.friendMap = converter.populate(Collectors.groupingBy(FriendshipRelation::first,
+                Collectors.mapping(FriendshipRelation::second, Collectors.toSet())));
     }
 
     @Override
-    public boolean isFriendOf(String firstUsername, String secondUsername) {
+    public boolean areFriends(String firstUsername, String secondUsername) {
         if (firstUsername == null || firstUsername.isEmpty() || firstUsername.isBlank()) {
             throw new IllegalArgumentException("First username cannot be null, blank or empty!");
         }

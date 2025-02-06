@@ -12,13 +12,14 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRep
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentDebtException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.GroupDebtsConverter;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,37 +31,16 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
     private final NotificationsRepository notificationsRepository;
     private final Map<FriendGroup, Set<GroupDebt>> groupDebts;
 
-    private GroupDebt createFromDTO(GroupDebtDTO dto) {
-        Optional<User> debtor = userRepository.getUserByUsername(dto.debtorUsername());
-        if (debtor.isEmpty()) {
-            return null;
-        }
-        Optional<User> recipient = userRepository.getUserByUsername(dto.recipientUsername());
-        if (recipient.isEmpty()) {
-            return null;
-        }
-        Optional<FriendGroup> group = friendGroupRepository.getGroup(dto.groupName());
-        if (group.isEmpty()) {
-            return null;
-        }
-        return new GroupDebt(debtor.get(), recipient.get(), group.get(), dto.amount(), dto.reason());
-    }
-
-    private Map<FriendGroup, Set<GroupDebt>> populateDebts() {
-        return csvProcessor
-                .readAll()
-                .stream()
-                .map(this::createFromDTO)
-                .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(GroupDebt::group, Collectors.mapping(debt -> debt, Collectors.toSet())));
-    }
-
     public DefaultGroupDebtsRepository(DependencyContainer dependencyContainer) {
         this.csvProcessor = dependencyContainer.get(GroupDebtsCsvProcessor.class);
         this.userRepository = dependencyContainer.get(UserRepository.class);
         this.friendGroupRepository = dependencyContainer.get(FriendGroupRepository.class);
         this.notificationsRepository = dependencyContainer.get(NotificationsRepository.class);
-        this.groupDebts = populateDebts();
+
+        DataConverter<Map<FriendGroup, Set<GroupDebt>>, GroupDebt, GroupDebtDTO> converter =
+                new GroupDebtsConverter(csvProcessor, userRepository, friendGroupRepository);
+        this.groupDebts = converter.populate(Collectors.groupingBy(GroupDebt::group,
+                Collectors.mapping(debt -> debt, Collectors.toSet())));
     }
 
     @Override
@@ -115,11 +95,11 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
                 new GroupDebtDTO(debtor.username(), recipient.username(), group.name(), amount, reason));
     }
 
-    private void lowerDebtBurden(GroupDebt debt, double amount) {
+    private void lowerDebtBurden(GroupDebt debt, FriendGroup group, double amount) {
         double newAmount = debt.amount() - amount;
 
-        if (newAmount == 0) {
-            groupDebts.remove(debt);
+        if (newAmount <= 0) {
+            groupDebts.get(group).remove(debt);
 
             csvProcessor.remove(d -> d.debtorUsername().equals(debt.debtor().username()) &&
                     d.recipientUsername().equals(debt.recipient().username()) &&
@@ -142,7 +122,6 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
         notificationsRepository.addNotificationForUser(debt.debtor().username(),
                 "%s approved your payment of %s LV in group %s for %s. You now owe them %s LV."
                         .formatted(debt.recipient().username(), amount, debt.group().name(), debt.reason(), newAmount),
-                LocalDateTime.now(),
                 NotificationType.PERSONAL);
     }
 
@@ -165,6 +144,9 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
         }
         if (amount <= 0) {
             throw new IllegalArgumentException("Debt amount cannot be less than or equal to 0!");
+        }
+        if (debtorUsername.equals(recipientUsername)) {
+            throw new IllegalArgumentException("Debtor and recipient cannot be the same person!");
         }
     }
 
@@ -191,11 +173,11 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
         Optional<GroupDebt> debt =
                 getDebtOfDebtorAndRecipient(debtor.get(), recipient.get(), friendGroup.get(), reason);
         if (debt.isEmpty()) {
-            addDebt(debtor.get(), recipient.get(), friendGroup.get(), amount, reason);
-            return;
+            throw new NonExistentDebtException("Debt in group \"%s\" with debtor %s and reason \"%s\" doesn't exist!"
+                    .formatted(groupName, debtorUsername, reason));
         }
 
-        lowerDebtBurden(debt.get(), amount);
+        lowerDebtBurden(debt.get(), friendGroup.get(), amount);
     }
 
     private void increaseDebtBurden(GroupDebt debt, double amount) {

@@ -15,23 +15,21 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
-import com.opencsv.bean.StatefulBeanToCsv;
-import com.opencsv.bean.StatefulBeanToCsvBuilder;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.ExpensesConverter;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DefaultExpensesRepository implements ExpensesRepository {
     private final Logger logger;
@@ -43,37 +41,6 @@ public class DefaultExpensesRepository implements ExpensesRepository {
     private final NotificationsRepository notificationsRepository;
     private final Map<User, Set<Expense>> expensesMap;
 
-    private Expense createFromDTO(ExpenseDTO dto) {
-        Optional<User> payer = userRepository.getUserByUsername(dto.payerUsername());
-        if (payer.isEmpty()) {
-            return null;
-        }
-        try {
-            Set<User> participants = dto
-                    .participantsUsernames()
-                    .stream().map(username -> {
-                        Optional<User> user = userRepository.getUserByUsername(username);
-                        if (user.isEmpty()) {
-                            throw new IllegalArgumentException();
-                        }
-                        return user.get();
-                    }).collect(Collectors.toSet());
-            return new Expense(payer.get(), dto.amount(), dto.reason(), dto.timestamp(), participants);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    private Map<User, Set<Expense>> populateExpenses() {
-        return csvProcessor
-                .readAll()
-                .stream()
-                .map(this::createFromDTO)
-                .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(expense -> expense.payer(),
-                        Collectors.mapping(expense -> expense, Collectors.toSet())));
-    }
-
     public DefaultExpensesRepository(DependencyContainer dependencyContainer) {
         this.logger = dependencyContainer.get(Logger.class);
         this.csvProcessor = dependencyContainer.get(ExpensesCsvProcessor.class);
@@ -82,7 +49,11 @@ public class DefaultExpensesRepository implements ExpensesRepository {
         this.personalDebtsRepository = dependencyContainer.get(PersonalDebtsRepository.class);
         this.groupDebtsRepository = dependencyContainer.get(GroupDebtsRepository.class);
         this.notificationsRepository = dependencyContainer.get(NotificationsRepository.class);
-        this.expensesMap = populateExpenses();
+
+        DataConverter<Map<User, Set<Expense>>, Expense, ExpenseDTO> converter =
+                new ExpensesConverter(csvProcessor, userRepository);
+        this.expensesMap = converter.populate(Collectors.groupingBy(Expense::payer,
+                Collectors.mapping(expense -> expense, Collectors.toSet())));
     }
 
     private Set<Expense> getExpensesOf(User user) {
@@ -198,17 +169,30 @@ public class DefaultExpensesRepository implements ExpensesRepository {
     }
 
     @Override
-    public void exportRecent(String username, int count, Writer writer) throws IOException {
-        StatefulBeanToCsv<Expense> beanToCsv = new StatefulBeanToCsvBuilder<Expense>(writer).build();
-        Stream<Expense> expensesStream = getExpensesOf(username)
+    public void exportRecent(String username, int count, FileWriter writer) throws IOException {
+        if (username == null || username.isEmpty() || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+        }
+        if (count <= 0) {
+            throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
+        }
+
+        List<String> expenses = getExpensesOf(username)
                 .stream()
                 .sorted(Comparator.comparing(Expense::timestamp).reversed())
-                .limit(count);
+                .limit(count)
+                .map(e -> "%s: %s [%s] with %s"
+                        .formatted(e.timestamp(),
+                                e.amount(),
+                                e.reason(),
+                                String.join(", ", e.participants().stream().map(User::username).toList())))
+                .toList();
 
-        try {
-            beanToCsv.write(expensesStream);
-        } catch (CsvDataTypeMismatchException | CsvRequiredFieldEmptyException e) {
-            throw new IOException(e);
+        try (BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
+            String content = String.join(System.lineSeparator(), expenses);
+            bufferedWriter.write(content);
+            bufferedWriter.write(System.lineSeparator());
+            bufferedWriter.flush();
         }
     }
 }

@@ -5,7 +5,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import java.util.Set;
 
 public interface UserFriendsRepository {
-    boolean isFriendOf(String firstUsername, String secondUsername);
+    boolean areFriends(String firstUsername, String secondUsername);
 
     Set<User> getFriendsOf(String username);
 

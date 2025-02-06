@@ -10,11 +10,12 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.PersonalDebtDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentDebtException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.PersonalDebtsConverter;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,32 +26,14 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     private final NotificationsRepository notificationsRepository;
     private final Set<PersonalDebt> personalDebts;
 
-    private PersonalDebt createFromDTO(PersonalDebtDTO dto) {
-        Optional<User> debtor = userRepository.getUserByUsername(dto.debtorUsername());
-        if (debtor.isEmpty()) {
-            return null;
-        }
-        Optional<User> recipient = userRepository.getUserByUsername(dto.recipientUsername());
-        if (recipient.isEmpty()) {
-            return null;
-        }
-        return new PersonalDebt(debtor.get(), recipient.get(), dto.amount(), dto.reason());
-    }
-
-    private Set<PersonalDebt> populateDebts() {
-        return csvProcessor
-                .readAll()
-                .stream()
-                .map(this::createFromDTO)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-    }
-
     public DefaultPersonalDebtsRepository(DependencyContainer dependencyContainer) {
         this.csvProcessor = dependencyContainer.get(PersonalDebtsCsvProcessor.class);
         this.userRepository = dependencyContainer.get(UserRepository.class);
         this.notificationsRepository = dependencyContainer.get(NotificationsRepository.class);
-        this.personalDebts = populateDebts();
+
+        DataConverter<Set<PersonalDebt>, PersonalDebt, PersonalDebtDTO> converter =
+                new PersonalDebtsConverter(csvProcessor, userRepository);
+        this.personalDebts = converter.populate(Collectors.toSet());
     }
 
     @Override
@@ -89,7 +72,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     private void lowerDebtBurden(PersonalDebt debt, double amount) {
         double newAmount = debt.amount() - amount;
 
-        if (newAmount == 0) {
+        if (newAmount <= 0) {
             personalDebts.remove(debt);
 
             csvProcessor.remove(d -> d.debtorUsername().equals(debt.debtor().username()) &&
@@ -110,12 +93,10 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
         notificationsRepository.addNotificationForUser(debt.debtor().username(),
                 "%s approved your payment of %s LV for %s. You now owe them %s LV."
                         .formatted(debt.recipient().username(), amount, debt.reason(), newAmount),
-                LocalDateTime.now(),
                 NotificationType.PERSONAL);
     }
 
-    @Override
-    public void lowerDebtBurden(String debtorUsername, String recipientUsername, double amount, String reason) {
+    private void validateArguments(String debtorUsername, String recipientUsername, double amount, String reason) {
         if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
             throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
         }
@@ -125,6 +106,17 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
         if (amount <= 0) {
             throw new IllegalArgumentException("Debt amount cannot be less than or equal to 0!");
         }
+        if (reason == null || reason.isEmpty() || reason.isBlank()) {
+            throw new IllegalArgumentException("Reason cannot be null, blank or empty!");
+        }
+        if (debtorUsername.equals(recipientUsername)) {
+            throw new IllegalArgumentException("Debtor and recipient cannot be the same person!");
+        }
+    }
+
+    @Override
+    public void lowerDebtBurden(String debtorUsername, String recipientUsername, double amount, String reason) {
+        validateArguments(debtorUsername, recipientUsername, amount, reason);
 
         Optional<User> debtor = userRepository.getUserByUsername(debtorUsername);
         if (debtor.isEmpty()) {
@@ -137,8 +129,8 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
 
         Optional<PersonalDebt> debt = getDebtOfDebtorAndRecipient(debtor.get(), recipient.get(), reason);
         if (debt.isEmpty()) {
-            addDebt(debtor.get(), recipient.get(), amount, reason);
-            return;
+            throw new NonExistentDebtException("Debt with debtor %s and reason \"%s\" doesn't exist!"
+                    .formatted(debtorUsername, reason));
         }
         lowerDebtBurden(debt.get(), amount);
     }
@@ -159,15 +151,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
 
     @Override
     public void increaseDebtBurden(String debtorUsername, String recipientUsername, double amount, String reason) {
-        if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
-            throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
-        }
-        if (recipientUsername == null || recipientUsername.isEmpty() || recipientUsername.isBlank()) {
-            throw new IllegalArgumentException("Recipient username cannot be null, blank or empty!");
-        }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Debt amount cannot be less than or equal to 0!");
-        }
+        validateArguments(debtorUsername, recipientUsername, amount, reason);
 
         Optional<User> debtor = userRepository.getUserByUsername(debtorUsername);
         if (debtor.isEmpty()) {

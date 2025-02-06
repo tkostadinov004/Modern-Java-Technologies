@@ -33,7 +33,7 @@ public class SplitwiseClient {
 
                 writer.println(message);
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             System.out.println("Unexpected connection error!");
         }
     }

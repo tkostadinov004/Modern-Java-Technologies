@@ -13,6 +13,8 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExitChatCom
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExportRecentExpensesCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.HelpCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.JoinChatCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ListFriendsCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ListGroupsCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.LoginCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.LogoutCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.PayedCommand;
@@ -68,7 +70,9 @@ public class CommandFactory implements Factory<Command> {
             case "logout" -> new LogoutCommand(authenticator, command.args());
             case "help" -> new HelpCommand(command.args());
             case "add-friend" -> new AddFriendCommand(authenticator, userFriendsRepository, command.args());
+            case "list-friends" -> new ListFriendsCommand(authenticator, userFriendsRepository, command.args());
             case "create-group" -> new CreateGroupCommand(authenticator, friendGroupRepository, command.args());
+            case "list-groups" -> new ListGroupsCommand(authenticator, friendGroupRepository, command.args());
             case "split" -> new SplitCommand(authenticator, expensesRepository, command.args());
             case "split-group" -> new SplitWithGroupCommand(authenticator, expensesRepository, command.args());
             case "get-status" ->

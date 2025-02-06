@@ -9,12 +9,16 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.AlreadyRegisteredException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.UserConverter;
 
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DefaultUserRepository implements UserRepository {
     private final CsvProcessor<User> csvProcessor;
@@ -23,8 +27,14 @@ public class DefaultUserRepository implements UserRepository {
 
     public DefaultUserRepository(DependencyContainer dependencyContainer) {
         this.csvProcessor = dependencyContainer.get(UserCsvProcessor.class);
-        this.users = csvProcessor.readAll();
+
+        DataConverter<Set<User>, User, User> dataConverter = new UserConverter(csvProcessor);
+        this.users = new HashSet<>(dataConverter.populate(Collectors.toSet()));
         this.userSockets = new HashMap<>();
+    }
+
+    public Set<User> getAllUsers() {
+        return users;
     }
 
     @Override
@@ -50,6 +60,9 @@ public class DefaultUserRepository implements UserRepository {
 
     @Override
     public Optional<Socket> getSocketByUsername(String username) {
+        if (username == null || username.isEmpty() || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+        }
         if (!userSockets.containsKey(username)) {
             return Optional.empty();
         }
@@ -61,6 +74,9 @@ public class DefaultUserRepository implements UserRepository {
     public void bindSocketToUser(String username, Socket socket) {
         if (!containsUser(username)) {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
+        }
+        if (socket == null) {
+            throw new IllegalArgumentException("Socket cannot be null!");
         }
 
         userSockets.put(username, socket);

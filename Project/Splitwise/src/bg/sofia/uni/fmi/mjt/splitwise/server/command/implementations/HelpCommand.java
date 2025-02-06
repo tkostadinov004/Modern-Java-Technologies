@@ -20,7 +20,9 @@ public class HelpCommand extends VariableArgumentsCommand {
             case "logout" -> LogoutCommand.help();
             case "help" -> HelpCommand.help();
             case "add-friend" -> AddFriendCommand.help();
+            case "list-friends" -> ListFriendsCommand.help();
             case "create-group" -> CreateGroupCommand.help();
+            case "list-groups" -> ListGroupsCommand.help();
             case "split" -> SplitCommand.help();
             case "split-group" -> SplitWithGroupCommand.help();
             case "get-status" -> StatusCommand.help();
@@ -43,7 +45,9 @@ public class HelpCommand extends VariableArgumentsCommand {
         writer.println(LogoutCommand.help());
         writer.println(HelpCommand.help());
         writer.println(AddFriendCommand.help());
+        writer.println(ListFriendsCommand.help());
         writer.println(CreateGroupCommand.help());
+        writer.println(ListGroupsCommand.help());
         writer.println(SplitCommand.help());
         writer.println(SplitWithGroupCommand.help());
         writer.println(StatusCommand.help());

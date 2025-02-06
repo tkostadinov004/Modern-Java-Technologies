@@ -1,5 +1,7 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.models;
 
+import java.util.Objects;
+
 public class GroupDebt {
     private User debtor;
     private User recipient;
@@ -13,6 +15,19 @@ public class GroupDebt {
         this.group = group;
         this.amount = amount;
         this.reason = reason;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GroupDebt groupDebt = (GroupDebt) o;
+        return Double.compare(amount, groupDebt.amount) == 0 && Objects.equals(debtor, groupDebt.debtor) && Objects.equals(recipient, groupDebt.recipient) && Objects.equals(group, groupDebt.group) && Objects.equals(reason, groupDebt.reason);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(debtor, recipient, group, amount, reason);
     }
 
     public User debtor() {
@@ -40,12 +55,6 @@ public class GroupDebt {
             throw new IllegalArgumentException("Amount cannot be less than or equal to 0!");
         }
         this.amount = amount;
-    }
-
-    public void swapSides() {
-        User temp = debtor;
-        debtor = recipient;
-        recipient = temp;
     }
 }
 

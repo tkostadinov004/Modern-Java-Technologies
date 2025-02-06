@@ -10,11 +10,12 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.NotificationDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.NotificationsConverter;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,28 +25,14 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
     private final UserRepository userRepository;
     private final Map<User, Set<Notification>> notificationsMap;
 
-    private Notification createFromDTO(NotificationDTO dto) {
-        Optional<User> receiver = userRepository.getUserByUsername(dto.receiverUsername());
-        if (receiver.isEmpty()) {
-            return null;
-        }
-        return new Notification(receiver.get(), dto.content(), dto.timeSent(), dto.type());
-    }
-
-    private Map<User, Set<Notification>> populateNotificationsMap() {
-        return csvProcessor
-                .readAll()
-                .stream()
-                .map(this::createFromDTO)
-                .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(Notification::receiver,
-                        Collectors.mapping(rel -> rel, Collectors.toSet())));
-    }
-
     public DefaultNotificationsRepository(DependencyContainer dependencyContainer) {
         this.csvProcessor = dependencyContainer.get(NotificationsCsvProcessor.class);
         this.userRepository = dependencyContainer.get(UserRepository.class);
-        this.notificationsMap = populateNotificationsMap();
+
+        DataConverter<Map<User, Set<Notification>>, Notification, NotificationDTO> converter =
+                new NotificationsConverter(csvProcessor, userRepository);
+        this.notificationsMap = converter.populate(Collectors.groupingBy(Notification::receiver,
+                Collectors.mapping(rel -> rel, Collectors.toSet())));
     }
 
     @Override
@@ -79,6 +66,9 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
         if (timeSent == null) {
             throw new IllegalArgumentException("Time sent cannot be null!");
         }
+        if (type == null) {
+            throw new IllegalArgumentException("Notification type cannot be null!");
+        }
 
         Optional<User> user = userRepository.getUserByUsername(username);
         if (user.isEmpty()) {
@@ -90,6 +80,11 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
         Notification notification = new Notification(user.get(), notificationContent, timeSent, type);
         notificationsMap.get(user.get()).add(notification);
         csvProcessor.writeToFile(new NotificationDTO(username, notificationContent, timeSent, type));
+    }
+
+    @Override
+    public void addNotificationForUser(String username, String notificationContent, NotificationType type) {
+        addNotificationForUser(username, notificationContent, LocalDateTime.now(), type);
     }
 
     @Override
