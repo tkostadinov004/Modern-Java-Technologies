@@ -6,6 +6,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.GroupDebt;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.GroupDebtDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
@@ -38,7 +39,7 @@ public class DefaultGroupDebtsRepositoryTest {
     private static final User user3 = new User("user3", "asd", "Test", "Test1");
     private static final User user4 = new User("user4", "asd", "Test", "Test1");
     private static final FriendGroup group = new FriendGroup("testGroup", Set.of(user1, user2, user3));
-    
+
     @BeforeAll
     public static void setUp() {
         NotificationsRepository notificationsRepository = mock();
@@ -234,10 +235,24 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenRemovesDebtIfCompletelyPaidOff() {
+        GroupDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",100, "test reason");
+        GroupDebtDTO debtDTO = new GroupDebtDTO("user1", "user2", "testGroup",100, "test reason");
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).remove(debtDTO);
 
         groupDebtsRepository.lowerDebtBurden("user1", "user2", "testGroup",100, "test reason");
+
+        verify(csvProcessor, times(1))
+                .remove(debtDTO);
 
         Map<FriendGroup, Set<GroupDebt>> debtsMap = groupDebtsRepository.getDebtsOf("user1");
         assertTrue(debtsMap.containsKey(group),
@@ -253,10 +268,25 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenLowersDebtAmount() {
+        GroupDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+        GroupDebtDTO crudDTO = new GroupDebtDTO("user1", "user2", "testGroup",100, "test reason");
+        GroupDebtDTO modifiedDTO = new GroupDebtDTO("user1", "user2", "testGroup",70, "test reason");
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).modify(crudDTO, modifiedDTO);
+
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",100, "test reason");
 
         groupDebtsRepository.lowerDebtBurden("user1", "user2", "testGroup",30, "test reason");
+
+        verify(csvProcessor, times(1))
+                .modify(crudDTO, modifiedDTO);
 
         Map<FriendGroup, Set<GroupDebt>> debtsMap = groupDebtsRepository.getDebtsOf("user1");
         assertTrue(debtsMap.containsKey(group),
@@ -401,9 +431,20 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenAddsDebtIfItDoesNotExist() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
 
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
         groupDebtsRepository.increaseDebtBurden( "user1", "user2", "testGroup",50, "test reason");
+        verify(csvProcessor, times(0))
+                .modify(any(), any());
+        verify(csvProcessor, times(1))
+                .writeToFile(any());
 
         Map<FriendGroup, Set<GroupDebt>> debtsMap = groupDebtsRepository.getDebtsOf("user1");
         assertTrue(debtsMap.containsKey(group),
@@ -418,10 +459,24 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenIncreasesDebtAmount() {
+        GroupDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+
+        GroupDebtDTO crudDTO = new GroupDebtDTO("user1", "user2", "testGroup",100, "test reason");
+        GroupDebtDTO modifiedDTO = new GroupDebtDTO("user1", "user2", "testGroup",130, "test reason");
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).modify(crudDTO, modifiedDTO);
+
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup", 100, "test reason");
-
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",30, "test reason");
+        verify(csvProcessor, times(1))
+                .modify(crudDTO, modifiedDTO);
 
         Optional<GroupDebt> debt = groupDebtsRepository
                 .getDebtsOf("user1")

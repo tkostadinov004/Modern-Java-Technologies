@@ -98,13 +98,12 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
     private void lowerDebtBurden(GroupDebt debt, FriendGroup group, double amount) {
         double newAmount = debt.amount() - amount;
 
+        GroupDebtDTO crudDTO = new GroupDebtDTO(debt.debtor().username(),
+                debt.recipient().username(), group.name(), debt.amount(), debt.reason());
+
         if (newAmount <= 0) {
             groupDebts.get(group).remove(debt);
-
-            csvProcessor.remove(d -> d.debtorUsername().equals(debt.debtor().username()) &&
-                    d.recipientUsername().equals(debt.recipient().username()) &&
-                    d.groupName().equals(debt.group().name()) &&
-                    d.reason().equals(debt.reason()));
+            csvProcessor.remove(crudDTO);
         } else {
             debt.updateAmount(newAmount);
 
@@ -114,10 +113,7 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
                     newAmount,
                     debt.reason());
 
-            csvProcessor.modify(d -> d.debtorUsername().equals(debt.debtor().username()) &&
-                    d.recipientUsername().equals(debt.recipient().username()) &&
-                    d.groupName().equals(debt.group().name()) &&
-                    d.reason().equals(debt.reason()), updatedDebtDTO);
+            csvProcessor.modify(crudDTO, updatedDebtDTO);
         }
         notificationsRepository.addNotificationForUser(debt.debtor().username(),
                 "%s approved your payment of %s LV in group %s for %s. You now owe them %s LV."
@@ -180,8 +176,11 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
         lowerDebtBurden(debt.get(), friendGroup.get(), amount);
     }
 
-    private void increaseDebtBurden(GroupDebt debt, double amount) {
+    private void increaseDebtBurden(GroupDebt debt, FriendGroup group, double amount) {
         double newAmount = debt.amount() + amount;
+        GroupDebtDTO crudDTO = new GroupDebtDTO(debt.debtor().username(),
+                debt.recipient().username(), group.name(), debt.amount(), debt.reason());
+
         debt.updateAmount(newAmount);
 
         GroupDebtDTO updatedDebtDTO = new GroupDebtDTO(debt.debtor().username(),
@@ -190,10 +189,7 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
                 newAmount,
                 debt.reason());
 
-        csvProcessor.modify(d -> d.debtorUsername().equals(debt.debtor().username()) &&
-                d.recipientUsername().equals(debt.recipient().username()) &&
-                d.groupName().equals(debt.group().name()) &&
-                d.reason().equals(debt.reason()), updatedDebtDTO);
+        csvProcessor.modify(crudDTO, updatedDebtDTO);
     }
 
     @Override
@@ -223,6 +219,6 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
             return;
         }
 
-        increaseDebtBurden(debt.get(), amount);
+        increaseDebtBurden(debt.get(), friendGroup.get(), amount);
     }
 }

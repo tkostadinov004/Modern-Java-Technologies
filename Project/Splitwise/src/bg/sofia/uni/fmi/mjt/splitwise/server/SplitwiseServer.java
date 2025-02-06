@@ -6,7 +6,8 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.DefaultChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.CommandFactory;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.DataFilePaths;
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.ExpensesCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.GroupExpensesCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.PersonalExpensesCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.FriendGroupsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.GroupDebtsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.NotificationsCsvProcessor;
@@ -15,7 +16,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserCsvProcess
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserFriendsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
@@ -23,7 +24,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultChatRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultPersonalExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultFriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultGroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultNotificationsRepository;
@@ -85,7 +86,8 @@ public class SplitwiseServer {
         new File(DataFilePaths.PERSONAL_DEBTS_PATH).createNewFile();
         new File(DataFilePaths.FRIEND_GROUPS_PATH).createNewFile();
         new File(DataFilePaths.GROUP_DEBTS_PATH).createNewFile();
-        new File(DataFilePaths.EXPENSES_PATH).createNewFile();
+        new File(DataFilePaths.PERSONAL_EXPENSES_PATH).createNewFile();
+        new File(DataFilePaths.GROUP_EXPENSES_PATH).createNewFile();
     }
 
     private void registerCSVProcessors() throws FileNotFoundException {
@@ -101,15 +103,18 @@ public class SplitwiseServer {
                 new FileReader(DataFilePaths.GROUP_DEBTS_PATH)), DataFilePaths.GROUP_DEBTS_PATH);
         FriendGroupsCsvProcessor friendGroupCsvProcessor = new FriendGroupsCsvProcessor(new CSVReader(
                 new FileReader(DataFilePaths.FRIEND_GROUPS_PATH)), DataFilePaths.FRIEND_GROUPS_PATH);
-        ExpensesCsvProcessor expenseCsvProcessor = new ExpensesCsvProcessor(new CSVReader(
-                new FileReader(DataFilePaths.EXPENSES_PATH)), DataFilePaths.EXPENSES_PATH);
+        PersonalExpensesCsvProcessor personalExpensesCsvProcessor = new PersonalExpensesCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.PERSONAL_EXPENSES_PATH)), DataFilePaths.PERSONAL_EXPENSES_PATH);
+        GroupExpensesCsvProcessor groupExpensesCsvProcessor = new GroupExpensesCsvProcessor(new CSVReader(
+                new FileReader(DataFilePaths.GROUP_EXPENSES_PATH)), DataFilePaths.GROUP_EXPENSES_PATH);
         dependencyContainer.register(UserCsvProcessor.class, userCsvProcessor)
                 .register(UserFriendsCsvProcessor.class, userFriendsCsvProcessor)
                 .register(PersonalDebtsCsvProcessor.class, personalDebtsCsvProcessor)
                 .register(NotificationsCsvProcessor.class, notificationCsvProcessor)
                 .register(GroupDebtsCsvProcessor.class, groupDebtDTOCsvProcessor)
                 .register(FriendGroupsCsvProcessor.class, friendGroupCsvProcessor)
-                .register(ExpensesCsvProcessor.class, expenseCsvProcessor);
+                .register(PersonalExpensesCsvProcessor.class, personalExpensesCsvProcessor)
+                .register(GroupExpensesCsvProcessor.class, groupExpensesCsvProcessor);
     }
 
     private void registerRepositories() {
@@ -125,8 +130,8 @@ public class SplitwiseServer {
         dependencyContainer.register(FriendGroupRepository.class, friendGroupRepository);
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
         dependencyContainer.register(GroupDebtsRepository.class, groupDebtsRepository);
-        ExpensesRepository expensesRepository = new DefaultExpensesRepository(dependencyContainer);
-        dependencyContainer.register(ExpensesRepository.class, expensesRepository);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        dependencyContainer.register(PersonalExpensesRepository.class, expensesRepository);
     }
 
     public void start() {

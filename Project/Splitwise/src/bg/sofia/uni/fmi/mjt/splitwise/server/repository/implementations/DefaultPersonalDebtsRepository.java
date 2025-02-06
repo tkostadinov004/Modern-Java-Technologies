@@ -72,12 +72,12 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
     private void lowerDebtBurden(PersonalDebt debt, double amount) {
         double newAmount = debt.amount() - amount;
 
+        PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
+                debt.amount(), debt.reason());
+
         if (newAmount <= 0) {
             personalDebts.remove(debt);
-
-            csvProcessor.remove(d -> d.debtorUsername().equals(debt.debtor().username()) &&
-                    d.recipientUsername().equals(debt.recipient().username()) &&
-                    d.reason().equals(debt.reason()));
+            csvProcessor.remove(crudDTO);
         } else {
             debt.updateAmount(newAmount);
 
@@ -86,9 +86,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
                     newAmount,
                     debt.reason());
 
-            csvProcessor.modify(d -> d.debtorUsername().equals(debt.debtor().username()) &&
-                            d.recipientUsername().equals(debt.recipient().username()) &&
-                            d.reason().equals(debt.reason()), updatedDebtDTO);
+            csvProcessor.modify(crudDTO, updatedDebtDTO);
         }
         notificationsRepository.addNotificationForUser(debt.debtor().username(),
                 "%s approved your payment of %s LV for %s. You now owe them %s LV."
@@ -137,6 +135,9 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
 
     private void increaseDebtBurden(PersonalDebt debt, double amount) {
         double newAmount = debt.amount() + amount;
+        PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
+                debt.amount(), debt.reason());
+
         debt.updateAmount(newAmount);
 
         PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
@@ -144,9 +145,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
                 newAmount,
                 debt.reason());
 
-        csvProcessor.modify(d -> d.debtorUsername().equals(debt.debtor().username()) &&
-                        d.recipientUsername().equals(debt.recipient().username()) &&
-                        d.reason().equals(debt.reason()), updatedDebtDTO);
+        csvProcessor.modify(crudDTO, updatedDebtDTO);
     }
 
     @Override

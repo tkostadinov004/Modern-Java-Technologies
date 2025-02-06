@@ -1,29 +1,24 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.ExpensesCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.PersonalDebtsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.PersonalDebt;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.FriendshipRelationDTO;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.PersonalDebtDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentDebtException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -195,10 +190,23 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenRemovesDebtIfCompletelyPaidOff() {
+        PersonalDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+
         PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
+        PersonalDebtDTO debtDTO = new PersonalDebtDTO("user1", "user2",100, "test reason");
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).remove(debtDTO);
 
         personalDebtsRepository.lowerDebtBurden("user1", "user2", 100, "test reason");
+        verify(csvProcessor, times(1))
+                .remove(debtDTO);
 
         Optional<PersonalDebt> debt = personalDebtsRepository.getDebtsOf("user1")
                         .stream().filter(d -> d.recipient().equals(user2) && d.reason().equals("test reason"))
@@ -209,10 +217,25 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenLowersDebtAmount() {
+        PersonalDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+
+        PersonalDebtDTO crudDTO = new PersonalDebtDTO("user1", "user2", 100, "test reason");
+        PersonalDebtDTO modifiedDTO = new PersonalDebtDTO("user1", "user2", 70, "test reason");
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).modify(crudDTO, modifiedDTO);
+
         PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
 
         personalDebtsRepository.lowerDebtBurden("user1", "user2", 30, "test reason");
+        verify(csvProcessor, times(1))
+                .modify(crudDTO, modifiedDTO);
 
         Optional<PersonalDebt> debt = personalDebtsRepository.getDebtsOf("user1")
                         .stream().filter(d -> d.recipient().equals(user2) && d.reason().equals("test reason"))
@@ -329,9 +352,21 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenAddsDebtIfItDoesNotExist() {
+        PersonalDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+
         PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
 
         personalDebtsRepository.increaseDebtBurden( "user1", "user2", 50, "test reason");
+        verify(csvProcessor, times(0))
+                .modify(any(), any());
+        verify(csvProcessor, times(1))
+                .writeToFile(any());
 
         assertTrue(personalDebtsRepository.getDebtsOf("user1")
                 .stream().anyMatch(d -> d.recipient().equals(user2) && d.amount() == 50 && d.reason().equals("test reason")),
@@ -340,10 +375,24 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenIncreasesDebtAmount() {
+        PersonalDebtsCsvProcessor csvProcessor = mock();
+        when(csvProcessor.readAll())
+                .thenReturn(Set.of());
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).writeToFile(any());
+        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+                .thenReturn(csvProcessor);
+
+        PersonalDebtDTO crudDTO = new PersonalDebtDTO("user1", "user2", 100, "test reason");
+        PersonalDebtDTO modifiedDTO = new PersonalDebtDTO("user1", "user2", 130, "test reason");
+        doAnswer((Answer<Void>) _ -> null)
+                .when(csvProcessor).modify(crudDTO, modifiedDTO);
+
         PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
-
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 30, "test reason");
+        verify(csvProcessor, times(1))
+                .modify(crudDTO, modifiedDTO);
 
         Optional<PersonalDebt> debt = personalDebtsRepository.getDebtsOf("user1")
                 .stream().filter(d -> d.recipient().equals(user2) && d.reason().equals("test reason"))

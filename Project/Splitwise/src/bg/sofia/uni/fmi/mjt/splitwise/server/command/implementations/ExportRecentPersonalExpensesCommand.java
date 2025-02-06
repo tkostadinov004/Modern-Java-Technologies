@@ -4,20 +4,20 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authen
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-public class ExportRecentExpensesCommand extends StandardCommand {
+public class ExportRecentPersonalExpensesCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 2;
     private final Authenticator authenticator;
-    private final ExpensesRepository expensesRepository;
+    private final PersonalExpensesRepository expensesRepository;
 
-    public ExportRecentExpensesCommand(Authenticator authenticator,
-                                       ExpensesRepository expensesRepository,
-                                       String[] args) {
+    public ExportRecentPersonalExpensesCommand(Authenticator authenticator,
+                                               PersonalExpensesRepository expensesRepository,
+                                               String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.expensesRepository = expensesRepository;
@@ -55,8 +55,8 @@ public class ExportRecentExpensesCommand extends StandardCommand {
         parameters.addParameter("count", "the amount of expenses you want exported", false);
         parameters.addParameter("filename", "the name of the file you would want the expenses exported to", false);
 
-        return new CommandHelp("export-recent-expenses",
-                "exports the most recent expenses you have made in a specified CSV file",
+        return new CommandHelp("export-recent-personal-expenses",
+                "exports the most recent expenses you have made with specific friends in a specified CSV file",
                 parameters);
     }
 }

@@ -63,7 +63,7 @@ public abstract class CsvProcessor<T> {
 
     public abstract void writeToFile(T obj);
 
-    public synchronized void remove(Predicate<T> predicate) {
+    public synchronized void removeAll(Predicate<T> predicate) {
         if (data == null) {
             data = readAll();
         }
@@ -85,13 +85,35 @@ public abstract class CsvProcessor<T> {
         }
     }
 
-    public synchronized void modify(Predicate<T> predicate, T newValue) {
+    public synchronized void remove(T obj) {
+        if (data == null) {
+            data = readAll();
+        }
+
+        List<T> validObjects = data
+                .stream()
+                .filter(object -> !obj.equals(object))
+                .toList();
+
+        try {
+            Files.deleteIfExists(Path.of(filePath));
+            if (validObjects.isEmpty()) {
+                new File(filePath).createNewFile();
+            } else {
+                validObjects.forEach(this::writeToFile);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public synchronized void modify(T oldValue, T newValue) {
         if (data == null) {
             data = readAll();
         }
         data = data
                 .stream()
-                .map(obj -> predicate.test(obj) ? newValue : obj)
+                .map(obj -> obj.equals(oldValue) ? newValue : obj)
                 .collect(Collectors.toSet());
 
         try {

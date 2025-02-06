@@ -4,20 +4,21 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authen
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
 
 public class SplitCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
     private final Authenticator authenticator;
-    private final ExpensesRepository expensesRepository;
+    private final PersonalExpensesRepository expensesRepository;
 
     private static final int AMOUNT_INDEX = 0;
     private static final int USERNAME_INDEX = 1;
     private static final int REASON_INDEX = 2;
 
-    public SplitCommand(Authenticator authenticator, ExpensesRepository expensesRepository, String[] args) {
+    public SplitCommand(Authenticator authenticator, PersonalExpensesRepository expensesRepository, String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.expensesRepository = expensesRepository;
@@ -37,10 +38,11 @@ public class SplitCommand extends StandardCommand {
             throw new IllegalArgumentException("Invalid amount!", e);
         }
 
-        expensesRepository.addPersonalBaseExpense(authenticator.getAuthenticatedUser().username(),
+        expensesRepository.addExpense(authenticator.getAuthenticatedUser().username(),
                 arguments[USERNAME_INDEX],
                 amount,
-                arguments[REASON_INDEX]);
+                arguments[REASON_INDEX],
+                LocalDateTime.now());
         writer.println("Successfully split %s LV with %s for \"%s\"."
                 .formatted(amount, arguments[USERNAME_INDEX], arguments[REASON_INDEX]));
     }

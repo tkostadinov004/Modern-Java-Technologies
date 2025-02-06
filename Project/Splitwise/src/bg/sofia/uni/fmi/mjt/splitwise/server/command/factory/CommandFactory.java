@@ -10,7 +10,8 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ClearNotifi
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.CreateChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.CreateGroupCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExitChatCommand;
-import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExportRecentExpensesCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExportRecentGroupExpensesCommand;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ExportRecentPersonalExpensesCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.HelpCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.JoinChatCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.ListFriendsCommand;
@@ -27,7 +28,8 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.SplitWithGr
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations.StatusCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
@@ -40,7 +42,8 @@ public class CommandFactory implements Factory<Command> {
     private final ChatToken chatToken;
 
     private final ChatRepository chatRepository;
-    private final ExpensesRepository expensesRepository;
+    private final PersonalExpensesRepository personalExpensesRepository;
+    private final GroupExpensesRepository groupExpensesRepository;
     private final FriendGroupRepository friendGroupRepository;
     private final GroupDebtsRepository groupDebtsRepository;
     private final NotificationsRepository notificationsRepository;
@@ -54,7 +57,8 @@ public class CommandFactory implements Factory<Command> {
         this.authenticator = authenticator;
         this.chatToken = chatToken;
         this.chatRepository = dependencyContainer.get(ChatRepository.class);
-        this.expensesRepository = dependencyContainer.get(ExpensesRepository.class);
+        this.personalExpensesRepository = dependencyContainer.get(PersonalExpensesRepository.class);
+        this.groupExpensesRepository = dependencyContainer.get(GroupExpensesRepository.class);
         this.friendGroupRepository = dependencyContainer.get(FriendGroupRepository.class);
         this.groupDebtsRepository = dependencyContainer.get(GroupDebtsRepository.class);
         this.notificationsRepository = dependencyContainer.get(NotificationsRepository.class);
@@ -73,8 +77,8 @@ public class CommandFactory implements Factory<Command> {
             case "list-friends" -> new ListFriendsCommand(authenticator, userFriendsRepository, command.args());
             case "create-group" -> new CreateGroupCommand(authenticator, friendGroupRepository, command.args());
             case "list-groups" -> new ListGroupsCommand(authenticator, friendGroupRepository, command.args());
-            case "split" -> new SplitCommand(authenticator, expensesRepository, command.args());
-            case "split-group" -> new SplitWithGroupCommand(authenticator, expensesRepository, command.args());
+            case "split" -> new SplitCommand(authenticator, personalExpensesRepository, command.args());
+            case "split-group" -> new SplitWithGroupCommand(authenticator, groupExpensesRepository, command.args());
             case "get-status" ->
                     new StatusCommand(authenticator, personalDebtsRepository, groupDebtsRepository, command.args());
             case "payed" -> new PayedCommand(authenticator, personalDebtsRepository, command.args());
@@ -88,8 +92,10 @@ public class CommandFactory implements Factory<Command> {
             case "send-message-chat" ->
                     new SendMessageInChatCommand(authenticator, chatToken, chatRepository, command.args());
             case "exit-chat" -> new ExitChatCommand(authenticator, chatToken, command.args());
-            case "export-recent-expenses" ->
-                    new ExportRecentExpensesCommand(authenticator, expensesRepository, command.args());
+            case "export-recent-personal-expenses" ->
+                    new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, command.args());
+            case "export-recent-group-expenses" ->
+                    new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, command.args());
             default -> throw new IllegalArgumentException("Invalid command!");
         };
     }

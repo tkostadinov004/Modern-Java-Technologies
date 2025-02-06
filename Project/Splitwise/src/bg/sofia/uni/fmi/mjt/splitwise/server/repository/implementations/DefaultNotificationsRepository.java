@@ -98,6 +98,6 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
         notificationsMap.remove(user.get());
-        csvProcessor.remove(notification -> notification.receiverUsername().equals(username));
+        csvProcessor.removeAll(notification -> notification.receiverUsername().equals(username));
     }
 }

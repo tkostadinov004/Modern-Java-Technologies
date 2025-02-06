@@ -34,7 +34,8 @@ public class HelpCommand extends VariableArgumentsCommand {
             case "join-chat" -> JoinChatCommand.help();
             case "send-message-chat" -> SendMessageInChatCommand.help();
             case "exit-chat" -> ExitChatCommand.help();
-            case "export-recent-expenses" -> ExportRecentExpensesCommand.help();
+            case "export-recent-personal-expenses" -> ExportRecentPersonalExpensesCommand.help();
+            case "export-recent-group-expenses" -> ExportRecentGroupExpensesCommand.help();
             default -> throw new IllegalArgumentException("Invalid command!");
         };
     }
@@ -59,7 +60,8 @@ public class HelpCommand extends VariableArgumentsCommand {
         writer.println(JoinChatCommand.help());
         writer.println(SendMessageInChatCommand.help());
         writer.println(ExitChatCommand.help());
-        writer.println(ExportRecentExpensesCommand.help());
+        writer.println(ExportRecentPersonalExpensesCommand.help());
+        writer.println(ExportRecentGroupExpensesCommand.help());
     }
 
     @Override

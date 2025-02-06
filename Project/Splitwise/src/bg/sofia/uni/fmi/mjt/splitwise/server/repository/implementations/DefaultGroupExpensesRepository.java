@@ -1,22 +1,21 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.ExpensesCsvProcessor;
+import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.GroupExpensesCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.Expense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.GroupExpense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.ExpenseDTO;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.GroupExpenseDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.ExpensesConverter;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.GroupExpensesConverter;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -31,41 +30,31 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class DefaultExpensesRepository implements ExpensesRepository {
+public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
     private final Logger logger;
-    private final CsvProcessor<ExpenseDTO> csvProcessor;
+    private final CsvProcessor<GroupExpenseDTO> csvProcessor;
     private final UserRepository userRepository;
     private final FriendGroupRepository friendGroupRepository;
-    private final PersonalDebtsRepository personalDebtsRepository;
     private final GroupDebtsRepository groupDebtsRepository;
     private final NotificationsRepository notificationsRepository;
-    private final Map<User, Set<Expense>> expensesMap;
+    private final Map<User, Set<GroupExpense>> expensesMap;
 
-    public DefaultExpensesRepository(DependencyContainer dependencyContainer) {
+    public DefaultGroupExpensesRepository(DependencyContainer dependencyContainer) {
         this.logger = dependencyContainer.get(Logger.class);
-        this.csvProcessor = dependencyContainer.get(ExpensesCsvProcessor.class);
+        this.csvProcessor = dependencyContainer.get(GroupExpensesCsvProcessor.class);
         this.userRepository = dependencyContainer.get(UserRepository.class);
         this.friendGroupRepository = dependencyContainer.get(FriendGroupRepository.class);
-        this.personalDebtsRepository = dependencyContainer.get(PersonalDebtsRepository.class);
         this.groupDebtsRepository = dependencyContainer.get(GroupDebtsRepository.class);
         this.notificationsRepository = dependencyContainer.get(NotificationsRepository.class);
 
-        DataConverter<Map<User, Set<Expense>>, Expense, ExpenseDTO> converter =
-                new ExpensesConverter(csvProcessor, userRepository);
-        this.expensesMap = converter.populate(Collectors.groupingBy(Expense::payer,
+        DataConverter<Map<User, Set<GroupExpense>>, GroupExpense, GroupExpenseDTO> converter =
+                new GroupExpensesConverter(csvProcessor, userRepository, friendGroupRepository);
+        this.expensesMap = converter.populate(Collectors.groupingBy(GroupExpense::payer,
                 Collectors.mapping(expense -> expense, Collectors.toSet())));
     }
 
-    private Set<Expense> getExpensesOf(User user) {
-        if (!expensesMap.containsKey(user)) {
-            return Set.of();
-        }
-
-        return expensesMap.get(user);
-    }
-
     @Override
-    public Set<Expense> getExpensesOf(String username) {
+    public Set<GroupExpense> getExpensesOf(String username) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
@@ -75,61 +64,19 @@ public class DefaultExpensesRepository implements ExpensesRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        return getExpensesOf(user.get());
+        if (!expensesMap.containsKey(user.get())) {
+            return Set.of();
+        }
+
+        return expensesMap.get(user.get());
     }
 
-    private void validateArguments(String debtorUsername,
-                                   double amount,
-                                   String reason) {
-        if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
-            throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
-        }
-        if (reason == null || reason.isEmpty() || reason.isBlank()) {
-            throw new IllegalArgumentException("Reason cannot be null, blank or empty!");
-        }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Debt amount cannot be less than or equal to 0!");
-        }
-    }
-
-    @Override
-    public void addPersonalBaseExpense(String payerUsername,
-                                       String participantUsername,
-                                       double amount,
-                                       String reason) {
-        validateArguments(payerUsername, amount, reason);
-        if (participantUsername == null || participantUsername.isEmpty() || participantUsername.isBlank()) {
-            throw new IllegalArgumentException("Participant username cannot be null, blank or empty!");
-        }
-
-        Optional<User> payer = userRepository.getUserByUsername(payerUsername);
-        if (payer.isEmpty()) {
-            throw new NonExistentUserException("User with username %s does not exist!".formatted(payerUsername));
-        }
-
-        Optional<User> participant = userRepository.getUserByUsername(participantUsername);
-        if (participant.isEmpty()) {
-            throw new NonExistentUserException("User with username %s does not exist!".formatted(participantUsername));
-        }
-        expensesMap.putIfAbsent(payer.get(), new LinkedHashSet<>());
-        Expense expense = new Expense(payer.get(), amount, reason, LocalDateTime.now(), Set.of(participant.get()));
-        expensesMap.get(payer.get()).add(expense);
-        personalDebtsRepository.increaseDebtBurden(participantUsername, payerUsername, amount / 2.0, reason);
-        notificationsRepository.addNotificationForUser(participantUsername,
-                "%s noted that they paid %s LV for %s. You owe them %s LV."
-                        .formatted(payerUsername, amount, reason, amount / 2.0),
-                LocalDateTime.now(), NotificationType.PERSONAL);
-        csvProcessor.writeToFile(new ExpenseDTO(expense.payer().username(),
-                        expense.amount(), expense.reason(), expense.timestamp(), Set.of(expense.payer().username())));
-        logger.info("%s paid %s LV for %s".formatted(payerUsername, amount, reason));
-    }
-
-    private void addGroupExpense(FriendGroup group, User payer, double amount, String reason) {
+    private void addExpense(FriendGroup group, User payer, double amount, String reason) {
         Set<User> participants = group.participants()
                 .stream().filter(user -> !user.equals(payer))
                 .collect(Collectors.toSet());
 
-        Expense expense = new Expense(payer, amount, reason, LocalDateTime.now(), participants);
+        GroupExpense expense = new GroupExpense(payer, amount, reason, group, LocalDateTime.now());
         expensesMap.putIfAbsent(payer, new LinkedHashSet<>());
         expensesMap.get(payer).add(expense);
 
@@ -140,20 +87,35 @@ public class DefaultExpensesRepository implements ExpensesRepository {
                 "%s noted that they paid %s LV in your group %s for %s. You owe them %s LV."
                         .formatted(payer.username(), amount, group.name(), reason, amountPerPerson),
                 LocalDateTime.now(), NotificationType.GROUP));
-        csvProcessor.writeToFile(new ExpenseDTO(expense.payer().username(),
+        csvProcessor.writeToFile(new GroupExpenseDTO(expense.payer().username(),
                 expense.amount(),
                 expense.reason(),
-                expense.timestamp(),
-                expense.participants().stream().map(User::username).collect(Collectors.toSet())));
+                expense.group().name(),
+                expense.timestamp()));
         logger.info("%s paid %s LV for %s in group %s.".formatted(payer.username(), amount, reason, group.name()));
     }
 
-    @Override
-    public void addGroupExpense(String payerUsername, String groupName, double amount, String reason) {
-        validateArguments(payerUsername, amount, reason);
+    private void validateArguments(String debtorUsername,
+                                   String groupName,
+                                   double amount,
+                                   String reason) {
+        if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
+            throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
+        }
         if (groupName == null || groupName.isEmpty() || groupName.isBlank()) {
             throw new IllegalArgumentException("Group name cannot be null, blank or empty!");
         }
+        if (reason == null || reason.isEmpty() || reason.isBlank()) {
+            throw new IllegalArgumentException("Reason cannot be null, blank or empty!");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Debt amount cannot be less than or equal to 0!");
+        }
+    }
+
+    @Override
+    public void addExpense(String payerUsername, String groupName, double amount, String reason) {
+        validateArguments(payerUsername, groupName, amount, reason);
 
         Optional<User> payer = userRepository.getUserByUsername(payerUsername);
         if (payer.isEmpty()) {
@@ -165,7 +127,7 @@ public class DefaultExpensesRepository implements ExpensesRepository {
             throw new NonExistentUserException("Group with name %s does not exist!".formatted(payerUsername));
         }
 
-        addGroupExpense(group.get(), payer.get(), amount, reason);
+        addExpense(group.get(), payer.get(), amount, reason);
     }
 
     @Override
@@ -179,13 +141,13 @@ public class DefaultExpensesRepository implements ExpensesRepository {
 
         List<String> expenses = getExpensesOf(username)
                 .stream()
-                .sorted(Comparator.comparing(Expense::timestamp).reversed())
+                .sorted(Comparator.comparing(GroupExpense::timestamp).reversed())
                 .limit(count)
-                .map(e -> "%s: %s [%s] with %s"
+                .map(e -> "%s: %s [%s] in group %s"
                         .formatted(e.timestamp(),
                                 e.amount(),
                                 e.reason(),
-                                String.join(", ", e.participants().stream().map(User::username).toList())))
+                                e.group()))
                 .toList();
 
         try (BufferedWriter bufferedWriter = new BufferedWriter(writer)) {

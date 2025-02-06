@@ -4,20 +4,21 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authen
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 
 import java.io.PrintWriter;
 
 public class SplitWithGroupCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
     private final Authenticator authenticator;
-    private final ExpensesRepository expensesRepository;
+    private final GroupExpensesRepository expensesRepository;
 
     private static final int AMOUNT_INDEX = 0;
     private static final int GROUP_NAME_INDEX = 1;
     private static final int REASON_INDEX = 2;
 
-    public SplitWithGroupCommand(Authenticator authenticator, ExpensesRepository expensesRepository, String[] args) {
+    public SplitWithGroupCommand(Authenticator authenticator, GroupExpensesRepository expensesRepository, String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.expensesRepository = expensesRepository;
@@ -37,7 +38,7 @@ public class SplitWithGroupCommand extends StandardCommand {
             throw new IllegalArgumentException("Invalid amount!", e);
         }
 
-        expensesRepository.addGroupExpense(authenticator.getAuthenticatedUser().username(),
+        expensesRepository.addExpense(authenticator.getAuthenticatedUser().username(),
                 arguments[GROUP_NAME_INDEX],
                 amount,
                 arguments[REASON_INDEX]);
