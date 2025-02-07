@@ -75,7 +75,8 @@ public class DefaultChatRepository implements ChatRepository {
     }
 
     @Override
-    public void sendMessage(String senderUsername, String roomCode, String message) throws NonExistentChatRoomException {
+    public void sendMessage(String senderUsername, String roomCode, String message)
+            throws NonExistentChatRoomException {
         Optional<Socket> senderSocket = userRepository.getSocketByUsername(senderUsername);
         if (senderSocket.isEmpty()) {
             throw new NonExistentUserException("User is not currently logged in!");
