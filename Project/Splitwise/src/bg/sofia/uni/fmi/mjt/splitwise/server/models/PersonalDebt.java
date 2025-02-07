@@ -20,7 +20,10 @@ public class PersonalDebt {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PersonalDebt that = (PersonalDebt) o;
-        return Double.compare(amount, that.amount) == 0 && Objects.equals(debtor, that.debtor) && Objects.equals(recipient, that.recipient) && Objects.equals(reason, that.reason);
+        return Double.compare(amount, that.amount) == 0 &&
+                Objects.equals(debtor, that.debtor) &&
+                Objects.equals(recipient, that.recipient) &&
+                Objects.equals(reason, that.reason);
     }
 
     @Override

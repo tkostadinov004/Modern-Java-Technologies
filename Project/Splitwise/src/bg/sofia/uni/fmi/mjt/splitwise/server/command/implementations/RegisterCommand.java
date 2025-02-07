@@ -25,17 +25,23 @@ public class RegisterCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (authenticator.isAuthenticated()) {
             writer.println("You cannot register if you are already logged in. Log out first!");
-            return;
+            return false;
         }
 
-        userRepository.registerUser(arguments[USERNAME_INDEX],
-                arguments[PASSWORD_INDEX],
-                arguments[FIRST_NAME_INDEX],
-                arguments[LAST_NAME_INDEX]);
-        writer.println("Successfully registered!");
+        try {
+            userRepository.registerUser(arguments[USERNAME_INDEX],
+                    arguments[PASSWORD_INDEX],
+                    arguments[FIRST_NAME_INDEX],
+                    arguments[LAST_NAME_INDEX]);
+            writer.println("Successfully registered!");
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

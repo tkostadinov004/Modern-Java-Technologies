@@ -65,12 +65,13 @@ public class HelpCommand extends VariableArgumentsCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (arguments.length > 0) {
             writer.println(getSpecificCommandInfo(arguments[0]));
         } else {
             printCommandList(writer);
         }
+        return true;
     }
 
     public static CommandHelp help() {

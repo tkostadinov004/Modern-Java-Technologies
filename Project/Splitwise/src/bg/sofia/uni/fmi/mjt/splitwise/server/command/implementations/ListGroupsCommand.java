@@ -22,20 +22,26 @@ public class ListGroupsCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
-        List<String> groups = friendGroupRepository
-                .getGroupsOf(authenticator.getAuthenticatedUser().username())
-                .stream()
-                .map(group -> "%s: [%s]".formatted(group.name(),
-                        String.join(", ", group.participants().stream().map(User::username).toList())))
-                .toList();
+        try {
+            List<String> groups = friendGroupRepository
+                    .getGroupsOf(authenticator.getAuthenticatedUser().username())
+                    .stream()
+                    .map(group -> "%s: [%s]".formatted(group.name(),
+                            String.join(", ", group.participants().stream().map(User::username).toList())))
+                    .toList();
 
-        groups.forEach(writer::println);
+            groups.forEach(writer::println);
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+        }
+        return false;
     }
 
     public static CommandHelp help() {

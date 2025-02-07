@@ -6,6 +6,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,27 +28,30 @@ public class ExportRecentPersonalExpensesCommand extends StandardCommand {
     private static final int FILENAME_INDEX = 1;
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         int count;
         try {
             count = Integer.parseInt(arguments[COUNT_INDEX]);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid amount!", e);
+            writer.println("Invalid amount!");
+            return false;
         }
 
         try {
             expensesRepository.exportRecent(authenticator.getAuthenticatedUser().username(),
                     count,
-                    new FileWriter(arguments[FILENAME_INDEX]));
+                    new BufferedWriter(new FileWriter(arguments[FILENAME_INDEX])));
             writer.println("Successfully exported expenses to file %s".formatted(arguments[FILENAME_INDEX]));
+            return true;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            writer.println("Unexpected server error!");
         }
+        return false;
     }
 
     public static CommandHelp help() {

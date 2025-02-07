@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.chat.token;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
-import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.exception.NotAuthenticatedException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.DefaultChatServer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
@@ -35,9 +34,9 @@ public class DefaultChatToken implements ChatToken {
     }
 
     @Override
-    public void joinChat(String chatCode) throws ChatException, NotAuthenticatedException {
+    public void joinChat(String chatCode) throws ChatException {
         if (!authenticator.isAuthenticated()) {
-            throw new NotAuthenticatedException("You are not authenticated!");
+            throw new ChatException("You are not authenticated!");
         }
         if (isInChat()) {
             throw new ChatException("You are already in a chat room!");

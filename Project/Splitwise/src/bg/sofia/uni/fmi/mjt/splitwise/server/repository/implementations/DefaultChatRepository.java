@@ -1,6 +1,7 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatCodeGenerator;
+import bg.sofia.uni.fmi.mjt.splitwise.server.chat.ChatServer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.exception.ChatException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.DefaultChatServer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
@@ -35,17 +36,7 @@ public class DefaultChatRepository implements ChatRepository {
         this.userSockets = new HashMap<>();
     }
 
-    @Override
-    public Socket connectUser(String username, String roomCode) throws ChatException {
-        if (!userRepository.containsUser(username)) {
-            throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
-        }
-        if (!containsRoom(roomCode)) {
-            throw new NonExistingChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
-        }
-
-        DefaultChatServer server = chatServers.get(roomCode);
-
+    private Socket connectUser(String username, String roomCode, ChatServer server) throws ChatException {
         Socket socket = new Socket();
         try {
             socket.connect(server.address());
@@ -57,12 +48,30 @@ public class DefaultChatRepository implements ChatRepository {
         if (userSocket.isEmpty()) {
             throw new ChatException("User not found!");
         }
-
         socketUsers.put(socket, userSocket.get());
         userSockets.put(userSocket.get(), socket);
         logger.info("User %s (%s) connected to room with code %s."
                 .formatted(username, userSocket.get().getInetAddress(), roomCode));
         return socket;
+    }
+
+    @Override
+    public Socket connectUser(String username, String roomCode) throws ChatException {
+        if (username == null || username.isEmpty() || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+        }
+        if (roomCode == null || roomCode.isEmpty() || roomCode.isBlank()) {
+            throw new IllegalArgumentException("Room code cannot be null, blank or empty!");
+        }
+        if (!userRepository.containsUser(username)) {
+            throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
+        }
+        if (!containsRoom(roomCode)) {
+            throw new NonExistingChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
+        }
+        ChatServer server = chatServers.get(roomCode);
+
+        return connectUser(username, roomCode, server);
     }
 
     @Override

@@ -23,18 +23,20 @@ public class AddFriendCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         try {
             userFriendsRepository.makeFriends(authenticator.getAuthenticatedUser().username(),
                     arguments[USERNAME_INDEX]);
             writer.println("Successfully added %s as your friend.".formatted(arguments[USERNAME_INDEX]));
+            return true;
         } catch (AlreadyFriendsException e) {
             writer.println("You are already friends with %s".formatted(arguments[USERNAME_INDEX]));
+            return false;
         }
     }
 

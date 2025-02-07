@@ -14,11 +14,11 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.GroupExpensesConverter;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -71,12 +71,16 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
         return expensesMap.get(user.get());
     }
 
-    private void addExpense(FriendGroup group, User payer, double amount, String reason) {
+    private void addExpense(FriendGroup group,
+                            User payer,
+                            double amount,
+                            String reason,
+                            LocalDateTime timestamp) {
         Set<User> participants = group.participants()
                 .stream().filter(user -> !user.equals(payer))
                 .collect(Collectors.toSet());
 
-        GroupExpense expense = new GroupExpense(payer, amount, reason, group, LocalDateTime.now());
+        GroupExpense expense = new GroupExpense(payer, amount, reason, group, timestamp);
         expensesMap.putIfAbsent(payer, new LinkedHashSet<>());
         expensesMap.get(payer).add(expense);
 
@@ -86,7 +90,7 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
         participants.forEach(user -> notificationsRepository.addNotificationForUser(user.username(),
                 "%s noted that they paid %s LV in your group %s for %s. You owe them %s LV."
                         .formatted(payer.username(), amount, group.name(), reason, amountPerPerson),
-                LocalDateTime.now(), NotificationType.GROUP));
+                timestamp, NotificationType.GROUP));
         csvProcessor.writeToFile(new GroupExpenseDTO(expense.payer().username(),
                 expense.amount(),
                 expense.reason(),
@@ -98,7 +102,8 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
     private void validateArguments(String debtorUsername,
                                    String groupName,
                                    double amount,
-                                   String reason) {
+                                   String reason,
+                                   LocalDateTime timestamp) {
         if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
             throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
         }
@@ -111,11 +116,18 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
         if (amount <= 0) {
             throw new IllegalArgumentException("Debt amount cannot be less than or equal to 0!");
         }
+        if (timestamp == null) {
+            throw new IllegalArgumentException("Timestamp cannot be null!");
+        }
     }
 
     @Override
-    public void addExpense(String payerUsername, String groupName, double amount, String reason) {
-        validateArguments(payerUsername, groupName, amount, reason);
+    public void addExpense(String payerUsername,
+                           String groupName,
+                           double amount,
+                           String reason,
+                           LocalDateTime timestamp) {
+        validateArguments(payerUsername, groupName, amount, reason, timestamp);
 
         Optional<User> payer = userRepository.getUserByUsername(payerUsername);
         if (payer.isEmpty()) {
@@ -124,19 +136,22 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
 
         Optional<FriendGroup> group = friendGroupRepository.getGroup(groupName);
         if (group.isEmpty()) {
-            throw new NonExistentUserException("Group with name %s does not exist!".formatted(payerUsername));
+            throw new NonExistingGroupException("Group with name %s does not exist!".formatted(payerUsername));
         }
 
-        addExpense(group.get(), payer.get(), amount, reason);
+        addExpense(group.get(), payer.get(), amount, reason, timestamp);
     }
 
     @Override
-    public void exportRecent(String username, int count, FileWriter writer) throws IOException {
+    public void exportRecent(String username, int count, BufferedWriter writer) throws IOException {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
         if (count <= 0) {
             throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
+        }
+        if (writer == null) {
+            throw new IllegalArgumentException("Writer cannot be null!");
         }
 
         List<String> expenses = getExpensesOf(username)
@@ -150,11 +165,9 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
                                 e.group()))
                 .toList();
 
-        try (BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
-            String content = String.join(System.lineSeparator(), expenses);
-            bufferedWriter.write(content);
-            bufferedWriter.write(System.lineSeparator());
-            bufferedWriter.flush();
-        }
+        String content = String.join(System.lineSeparator(), expenses);
+        writer.write(content);
+        writer.write(System.lineSeparator());
+        writer.flush();
     }
 }

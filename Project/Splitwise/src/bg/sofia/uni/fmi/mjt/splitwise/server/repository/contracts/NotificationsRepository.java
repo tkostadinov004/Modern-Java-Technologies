@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 public interface NotificationsRepository {
-    Set<Notification> getNotificationForUser(String username);
+    Set<Notification> getNotificationsForUser(String username);
 
     void addNotificationForUser(String username,
                                 String notificationContent,

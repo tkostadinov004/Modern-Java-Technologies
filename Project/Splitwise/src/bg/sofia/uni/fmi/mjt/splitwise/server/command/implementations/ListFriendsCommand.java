@@ -21,19 +21,25 @@ public class ListFriendsCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
-        List<String> usernames = userFriendsRepository
-                        .getFriendsOf(authenticator.getAuthenticatedUser().username())
-                        .stream()
-                        .map(u -> "%s (%s %s)".formatted(u.username(), u.firstName(), u.lastName()))
-                        .toList();
+        try {
+            List<String> usernames = userFriendsRepository
+                    .getFriendsOf(authenticator.getAuthenticatedUser().username())
+                    .stream()
+                    .map(u -> "%s (%s %s)".formatted(u.username(), u.firstName(), u.lastName()))
+                    .toList();
 
-        writer.println(String.join(", ", usernames));
+            writer.println(String.join(", ", usernames));
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

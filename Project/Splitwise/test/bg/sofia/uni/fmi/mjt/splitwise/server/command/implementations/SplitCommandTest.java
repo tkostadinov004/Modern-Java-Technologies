@@ -1,0 +1,136 @@
+package bg.sofia.uni.fmi.mjt.splitwise.server.command.implementations;
+
+import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.exception.CommandArgumentsCountException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
+import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
+import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
+
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+public class SplitCommandTest {
+    private static final PrintWriter printWriter = mock();
+
+    @Test
+    public void testDoesNotWorkWithInsufficientArguments() {
+        Authenticator authenticator = mock();
+        PersonalExpensesRepository personalExpensesRepository = mock();
+
+        assertThrows(CommandArgumentsCountException.class,
+                () -> new SplitCommand(authenticator, personalExpensesRepository, new String[0]),
+                "Exception should be thrown if there are less arguments than needed");
+        assertThrows(CommandArgumentsCountException.class,
+                () -> new SplitCommand(authenticator, personalExpensesRepository, new String[4]),
+                "Exception should be thrown if there are more arguments than needed");
+    }
+
+    @Test
+    public void testDoesNotWorkWhenUserIsNotAuthenticated() {
+        Authenticator authenticator = mock();
+        when(authenticator.isAuthenticated()).thenReturn(false);
+
+        PersonalExpensesRepository personalExpensesRepository = mock();
+        doAnswer((Answer<Void>) invocationOnMock -> null)
+                .when(personalExpensesRepository)
+                .addExpense(any(), any(), anyDouble(), any(), any());
+
+        Command command =
+                new SplitCommand(authenticator, personalExpensesRepository, new String[]{"10", "user", "reason"});
+        assertFalse(command.execute(printWriter),
+                "Command should not work when user is not authenticated");
+
+        verify(personalExpensesRepository, times(0))
+                .addExpense(any(), any(), anyDouble(), any(), any());
+    }
+
+    @Test
+    public void testDoesNotWorkWhenAmountIsInvalid() {
+        Authenticator authenticator = mock();
+        when(authenticator.isAuthenticated()).thenReturn(true);
+
+        PersonalExpensesRepository personalExpensesRepository = mock();
+
+        Command command =
+                new SplitCommand(authenticator, personalExpensesRepository, new String[]{"-asdasd10", "user", "reason"});
+        assertFalse(command.execute(printWriter),
+                "Command should not work when amount is invalid");
+
+        verify(personalExpensesRepository, times(0))
+                .addExpense(any(), any(), anyDouble(), any(), any());
+    }
+
+    @Test
+    public void testWorksWhenUserIsAuthenticated() {
+        Authenticator authenticator = mock();
+        when(authenticator.getAuthenticatedUser())
+                .thenReturn(new User("testuser", "pass", "fn", "ln"));
+        when(authenticator.isAuthenticated()).thenReturn(true);
+
+        PersonalExpensesRepository personalExpensesRepository = mock();
+        doAnswer((Answer<Void>) invocationOnMock -> null)
+                .when(personalExpensesRepository)
+                .addExpense(any(), any(), anyDouble(), any(), any());
+
+        Command command =
+                new SplitCommand(authenticator, personalExpensesRepository, new String[]{"10", "user", "reason"});
+
+        assertTrue(command.execute(printWriter),
+                "Command should work when user is authenticated");
+
+        verify(personalExpensesRepository, times(1))
+                .addExpense(any(), any(), anyDouble(), any(), any());
+    }
+
+    @Test
+    public void testHandlesErrors() {
+        Authenticator authenticator = mock();
+        when(authenticator.getAuthenticatedUser())
+                .thenReturn(new User("testuser", "pass", "fn", "ln"));
+        when(authenticator.isAuthenticated()).thenReturn(true);
+
+        PersonalExpensesRepository personalExpensesRepository = mock();
+        doThrow(IllegalArgumentException.class)
+                .when(personalExpensesRepository)
+                .addExpense(any(), any(), anyDouble(), any(), any());
+        Command command =
+                new SplitCommand(authenticator, personalExpensesRepository, new String[]{"10", "user", "reason"});
+        assertThrows(IllegalArgumentException.class, () -> personalExpensesRepository.addExpense("user", "testuser", 10, "reason", LocalDateTime.now()));
+        assertFalse(command.execute(printWriter),
+                "An exception should be handled if there are errors");
+    }
+
+    @Test
+    public void testHelpReturnsCorrectly() {
+        ParameterContainer parameters = new ParameterContainer();
+        parameters.addParameter("amount", "the amount a user should pay you", false);
+        parameters.addParameter("username", "the username of the user who should pay you", false);
+        parameters.addParameter("reason", "the reason for payment", false);
+
+        CommandHelp expected = new CommandHelp("split",
+                "with this command you can mark that a user owes you a given amount of money for a specific reason",
+                parameters);
+
+        CommandHelp actual = SplitCommand.help();
+
+        assertEquals(expected.toString(), actual.toString(),
+                "Help method should correct information about the command.");
+    }
+}

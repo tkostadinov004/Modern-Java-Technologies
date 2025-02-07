@@ -22,14 +22,20 @@ public class ClearNotificationsCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
-        notificationsRepository.removeAllNotificationsForUser(authenticator.getAuthenticatedUser().username());
-        writer.println("Successfully cleared all notifications.");
+        try {
+            notificationsRepository.removeAllNotificationsForUser(authenticator.getAuthenticatedUser().username());
+            writer.println("Successfully cleared all notifications.");
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

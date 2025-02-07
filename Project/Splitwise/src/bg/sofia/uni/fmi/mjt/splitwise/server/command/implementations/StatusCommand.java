@@ -51,29 +51,34 @@ public class StatusCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
+        try {
+            writer.println("Friends:");
+            Set<PersonalDebt> personalDebts =
+                    personalDebtsRepository.getDebtsOf(authenticator.getAuthenticatedUser().username());
+            if (!personalDebts.isEmpty()) {
+                personalDebts.forEach(debt -> printDebt(debt.debtor(),
+                        debt.recipient(), debt.amount(), debt.reason(), writer));
+            } else {
+                writer.println("<no debts>");
+            }
 
-        writer.println("Friends:");
-        Set<PersonalDebt> personalDebts =
-                personalDebtsRepository.getDebtsOf(authenticator.getAuthenticatedUser().username());
-        if (!personalDebts.isEmpty()) {
-            personalDebts.forEach(debt -> printDebt(debt.debtor(),
-                    debt.recipient(), debt.amount(), debt.reason(), writer));
-        } else {
-            writer.println("<no debts>");
-        }
-
-        writer.println("Groups:");
-        Map<FriendGroup, Set<GroupDebt>> groupDebts =
-                groupDebtsRepository.getDebtsOf(authenticator.getAuthenticatedUser().username());
-        if (!groupDebts.isEmpty()) {
-            groupDebts.entrySet().forEach(debtEntry -> printGroupDebt(debtEntry, writer));
-        } else {
-            writer.println("<no debts>");
+            writer.println("Groups:");
+            Map<FriendGroup, Set<GroupDebt>> groupDebts =
+                    groupDebtsRepository.getDebtsOf(authenticator.getAuthenticatedUser().username());
+            if (!groupDebts.isEmpty()) {
+                groupDebts.entrySet().forEach(debtEntry -> printGroupDebt(debtEntry, writer));
+            } else {
+                writer.println("<no debts>");
+            }
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
         }
     }
 

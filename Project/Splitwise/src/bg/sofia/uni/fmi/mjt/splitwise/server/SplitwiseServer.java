@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.Authenticator;
 import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.authenticator.DefaultAuthenticator;
+import bg.sofia.uni.fmi.mjt.splitwise.server.authentication.hash.PasswordHasher;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.ChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.chat.token.DefaultChatToken;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.CommandFactory;
@@ -16,6 +17,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserCsvProcess
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.UserFriendsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
@@ -24,6 +26,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultChatRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultGroupExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultPersonalExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultFriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.DefaultGroupDebtsRepository;
@@ -130,8 +133,11 @@ public class SplitwiseServer {
         dependencyContainer.register(FriendGroupRepository.class, friendGroupRepository);
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
         dependencyContainer.register(GroupDebtsRepository.class, groupDebtsRepository);
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
-        dependencyContainer.register(PersonalExpensesRepository.class, expensesRepository);
+        PersonalExpensesRepository personalExpensesRepository =
+                new DefaultPersonalExpensesRepository(dependencyContainer);
+        dependencyContainer.register(PersonalExpensesRepository.class, personalExpensesRepository);
+        GroupExpensesRepository groupExpensesRepository = new DefaultGroupExpensesRepository(dependencyContainer);
+        dependencyContainer.register(GroupExpensesRepository.class, groupExpensesRepository);
     }
 
     public void start() {
@@ -142,10 +148,10 @@ public class SplitwiseServer {
         while (true) {
             try (ServerSocket serverSocket = new ServerSocket()) {
                 serverSocket.bind(new InetSocketAddress(HOST, PORT));
-
                 handleFiles();
                 registerCSVProcessors();
                 registerRepositories();
+                dependencyContainer.register(PasswordHasher.class, new PasswordHasher());
                 InetSocketAddress address = new InetSocketAddress(serverSocket.getInetAddress(), PORT);
                 dependencyContainer
                         .register(ChatRepository.class, new DefaultChatRepository(dependencyContainer, address));

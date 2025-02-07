@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.GroupExpense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.PersonalExpense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.PersonalExpenseDTO;
@@ -10,7 +9,6 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class PersonalExpensesConverter
         extends DataConverter<Map<User, Set<PersonalExpense>>, PersonalExpense, PersonalExpenseDTO> {

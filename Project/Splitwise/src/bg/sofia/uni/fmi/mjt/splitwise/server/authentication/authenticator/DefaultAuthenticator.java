@@ -16,12 +16,14 @@ public class DefaultAuthenticator implements Authenticator {
     private final Logger logger;
     private final UserRepository userRepository;
     private final Socket userSocket;
+    private final PasswordHasher hasher;
     private User user;
 
     public DefaultAuthenticator(DependencyContainer dependencyContainer, Socket userSocket) {
         this.logger = dependencyContainer.get(Logger.class);
         this.userRepository = dependencyContainer.get(UserRepository.class);
         this.userSocket = userSocket;
+        this.hasher = dependencyContainer.get(PasswordHasher.class);
     }
 
     @Override
@@ -47,7 +49,6 @@ public class DefaultAuthenticator implements Authenticator {
         }
 
         Optional<User> user = userRepository.getUserByUsername(username);
-        PasswordHasher hasher = new PasswordHasher();
         if (user.isEmpty() || !hasher.hash(password).equals(user.get().hashedPass())) {
             throw new InvalidCredentialsException("Wrong username or password!");
         }

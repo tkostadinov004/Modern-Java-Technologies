@@ -25,26 +25,34 @@ public class PayedGroupCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         double amount;
         try {
             amount = Double.parseDouble(arguments[AMOUNT_INDEX]);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid amount!", e);
+            writer.println("Invalid amount!");
+            return false;
         }
 
-        groupDebtsRepository.lowerDebtBurden(arguments[USERNAME_INDEX],
-                authenticator.getAuthenticatedUser().username(),
-                arguments[GROUP_NAME_INDEX],
-                amount,
-                arguments[REASON_INDEX]);
-        writer.println("%s payed you %s LV for \"%s\" in group %s."
-                .formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX], arguments[GROUP_NAME_INDEX]));
+        try {
+            groupDebtsRepository.lowerDebtBurden(arguments[USERNAME_INDEX],
+                    authenticator.getAuthenticatedUser().username(),
+                    arguments[GROUP_NAME_INDEX],
+                    amount,
+                    arguments[REASON_INDEX]);
+            writer.println("%s payed you %s LV for \"%s\" in group %s."
+                    .formatted(arguments[USERNAME_INDEX], amount,
+                            arguments[REASON_INDEX], arguments[GROUP_NAME_INDEX]));
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

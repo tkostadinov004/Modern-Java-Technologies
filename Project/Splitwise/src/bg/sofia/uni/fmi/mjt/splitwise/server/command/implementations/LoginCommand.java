@@ -30,7 +30,7 @@ public class LoginCommand extends StandardCommand {
 
     private void printNotifications(String username, PrintWriter writer) {
         Map<NotificationType, List<Notification>> notifications = notificationsRepository
-                .getNotificationForUser(username)
+                .getNotificationsForUser(username)
                         .stream().collect(Collectors.groupingBy(n -> n.type()));
         if (notifications.isEmpty()) {
             return;
@@ -47,13 +47,15 @@ public class LoginCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         try {
             authenticator.authenticate(arguments[USERNAME_INDEX], arguments[PASSWORD_INDEX]);
             writer.println("Successfully logged in!");
             printNotifications(arguments[USERNAME_INDEX], writer);
-        } catch (AlreadyAuthenticatedException e) {
+            return true;
+        } catch (AlreadyAuthenticatedException | IllegalArgumentException e) {
             writer.println(e.getMessage());
+            return false;
         }
     }
 

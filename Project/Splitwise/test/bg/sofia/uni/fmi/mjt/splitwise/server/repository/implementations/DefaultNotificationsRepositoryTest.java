@@ -1,14 +1,11 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.NotificationsCsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.PersonalDebtsCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.Notification;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.NotificationType;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,27 +55,27 @@ public class DefaultNotificationsRepositoryTest {
     public void testGetNotificationsForUserThrowsOnInvalidUsername() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
 
-        assertThrows(IllegalArgumentException.class, () -> notificationsRepository.getNotificationForUser(null),
-                "getNotificationForUser() should throw on null username");
-        assertThrows(IllegalArgumentException.class, () -> notificationsRepository.getNotificationForUser(""),
-                "getNotificationForUser() should throw on empty username");
-        assertThrows(IllegalArgumentException.class, () -> notificationsRepository.getNotificationForUser("   "),
-                "getNotificationForUser() should throw on blank username");
+        assertThrows(IllegalArgumentException.class, () -> notificationsRepository.getNotificationsForUser(null),
+                "getNotificationsForUser() should throw on null username");
+        assertThrows(IllegalArgumentException.class, () -> notificationsRepository.getNotificationsForUser(""),
+                "getNotificationsForUser() should throw on empty username");
+        assertThrows(IllegalArgumentException.class, () -> notificationsRepository.getNotificationsForUser("   "),
+                "getNotificationsForUser() should throw on blank username");
     }
 
     @Test
     public void testGetNotificationsForUserThrowsOnNonexistentUser() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
 
-        assertThrows(NonExistentUserException.class, () -> notificationsRepository.getNotificationForUser( "asdasdasd"),
-                "getNotificationForUser() should throw on non existing user");
+        assertThrows(NonExistentUserException.class, () -> notificationsRepository.getNotificationsForUser( "asdasdasd"),
+                "getNotificationsForUser() should throw on non existing user");
     }
 
     @Test
     public void testGetFriendsReturnsEmptySetIfUserHasNoFriends() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
-        assertTrue(notificationsRepository.getNotificationForUser("user3").isEmpty(),
-                "getNotificationForUser() should return an empty set if a user has no notifications");
+        assertTrue(notificationsRepository.getNotificationsForUser("user3").isEmpty(),
+                "getNotificationsForUser() should return an empty set if a user has no notifications");
     }
 
     @Test
@@ -90,7 +87,7 @@ public class DefaultNotificationsRepositoryTest {
         notificationsRepository.addNotificationForUser(notification2.receiver().username(), notification2.content(), notification2.timeSent(), notification2.type());
 
         Set<Notification> expected = Set.of(notification1, notification2);
-        Set<Notification> actual = notificationsRepository.getNotificationForUser("user1");
+        Set<Notification> actual = notificationsRepository.getNotificationsForUser("user1");
 
         assertTrue(expected.size() == actual.size() && expected.containsAll(actual),
                 "All notifications of a user should be present in the repository.");
@@ -159,7 +156,7 @@ public class DefaultNotificationsRepositoryTest {
         notificationsRepository.addNotificationForUser(notification.receiver().username(), notification.content(), notification.timeSent(), notification.type());
 
         assertTrue(notificationsRepository
-                .getNotificationForUser(notification.receiver().username())
+                .getNotificationsForUser(notification.receiver().username())
                 .contains(notification),
                 "Notification should be added in the repository");
     }
@@ -171,13 +168,15 @@ public class DefaultNotificationsRepositoryTest {
         notificationsRepository.addNotificationForUser(notification.receiver().username(), notification.content(), notification.type());
 
         Optional<Notification> found = notificationsRepository
-                .getNotificationForUser(notification.receiver().username())
+                .getNotificationsForUser(notification.receiver().username())
                 .stream().filter(n -> n.content().equals(notification.content()) && n.type().equals(notification.type()))
                 .findFirst();
 
         assertTrue(found.isPresent(),
                 "Notification should be added in the repository");
-        assertEquals(notification, found.get(),
+        assertTrue(notification.receiver().equals(found.get().receiver())
+                && notification.type().equals(found.get().type())
+                && notification.content().equals(found.get().content()),
                 "Notification should be added in the repository");
     }
 
@@ -211,7 +210,7 @@ public class DefaultNotificationsRepositoryTest {
 
         notificationsRepository.removeAllNotificationsForUser(notification1.receiver().username());
 
-        assertTrue(notificationsRepository.getNotificationForUser(notification1.receiver().username()).isEmpty(),
+        assertTrue(notificationsRepository.getNotificationsForUser(notification1.receiver().username()).isEmpty(),
                 "All notifications of a given user should be deleted from the repository");
     }
 }

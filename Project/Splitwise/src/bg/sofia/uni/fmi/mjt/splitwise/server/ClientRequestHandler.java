@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.splitwise.server;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.Command;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.CommandFactory;
+import bg.sofia.uni.fmi.mjt.splitwise.server.command.factory.parser.CommandParser;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 
 import java.io.BufferedReader;
@@ -31,7 +32,7 @@ public class ClientRequestHandler implements Runnable {
             String input;
             while ((input = reader.readLine()) != null) {
                 try {
-                    Command command = commandFactory.build(input);
+                    Command command = commandFactory.build(input, new CommandParser());
                     command.execute(writer);
                 } catch (Exception e) {
                     logger.severe(e.getMessage());

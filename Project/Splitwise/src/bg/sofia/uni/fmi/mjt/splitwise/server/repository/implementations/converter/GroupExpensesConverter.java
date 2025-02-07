@@ -3,10 +3,8 @@ package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.convert
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.CsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.GroupExpense;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.PersonalExpense;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.GroupExpenseDTO;
-import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.PersonalExpenseDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 

@@ -21,10 +21,10 @@ public class CreateChatCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         try {
@@ -32,8 +32,10 @@ public class CreateChatCommand extends StandardCommand {
             writer.println("Chat room created with code %s".formatted(roomCode));
             writer.println("You can enter this chat room by typing \"join-room <room-code>\"");
             writer.println("Send this code to your friends so that they can connect to your chat room!");
+            return true;
         } catch (ChatException e) {
             writer.println("Unexpected error in creating a chat room!");
+            return false;
         }
     }
 

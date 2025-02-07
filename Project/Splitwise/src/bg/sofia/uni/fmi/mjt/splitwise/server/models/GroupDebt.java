@@ -22,7 +22,11 @@ public class GroupDebt {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GroupDebt groupDebt = (GroupDebt) o;
-        return Double.compare(amount, groupDebt.amount) == 0 && Objects.equals(debtor, groupDebt.debtor) && Objects.equals(recipient, groupDebt.recipient) && Objects.equals(group, groupDebt.group) && Objects.equals(reason, groupDebt.reason);
+        return Double.compare(amount, groupDebt.amount) == 0 &&
+                Objects.equals(debtor, groupDebt.debtor) &&
+                Objects.equals(recipient, groupDebt.recipient) &&
+                Objects.equals(group, groupDebt.group) &&
+                Objects.equals(reason, groupDebt.reason);
     }
 
     @Override

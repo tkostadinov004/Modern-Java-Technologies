@@ -21,20 +21,23 @@ public class ExitChatCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
         if (!chatToken.isInChat()) {
             writer.println("You have to be in a chat in order to send a message!");
-            return;
+            return false;
         }
 
         try {
             chatToken.leaveChat();
-        } catch (ChatException e) {
+            writer.println("Successfully left chat!");
+            return true;
+        } catch (ChatException | RuntimeException e) {
             writer.println(e.getMessage());
+            return false;
         }
     }
 

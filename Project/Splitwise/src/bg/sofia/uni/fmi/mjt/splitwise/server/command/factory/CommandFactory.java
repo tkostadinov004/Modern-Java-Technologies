@@ -67,46 +67,61 @@ public class CommandFactory implements Factory<Command> {
         this.userRepository = dependencyContainer.get(UserRepository.class);
     }
 
-    private Command build(ParsedCommand command) {
+    private Command buildParameterless(ParsedCommand command) {
         return switch (command.name()) {
-            case "login" -> new LoginCommand(authenticator, notificationsRepository, command.args());
-            case "register" -> new RegisterCommand(authenticator, userRepository, command.args());
             case "logout" -> new LogoutCommand(authenticator, command.args());
             case "help" -> new HelpCommand(command.args());
-            case "add-friend" -> new AddFriendCommand(authenticator, userFriendsRepository, command.args());
             case "list-friends" -> new ListFriendsCommand(authenticator, userFriendsRepository, command.args());
-            case "create-group" -> new CreateGroupCommand(authenticator, friendGroupRepository, command.args());
             case "list-groups" -> new ListGroupsCommand(authenticator, friendGroupRepository, command.args());
-            case "split" -> new SplitCommand(authenticator, personalExpensesRepository, command.args());
-            case "split-group" -> new SplitWithGroupCommand(authenticator, groupExpensesRepository, command.args());
             case "get-status" ->
                     new StatusCommand(authenticator, personalDebtsRepository, groupDebtsRepository, command.args());
-            case "payed" -> new PayedCommand(authenticator, personalDebtsRepository, command.args());
-            case "payed-group" -> new PayedGroupCommand(authenticator, groupDebtsRepository, command.args());
             case "show-notifications" ->
                     new ShowNotificationsCommand(authenticator, notificationsRepository, command.args());
             case "clear-notifications" ->
                     new ClearNotificationsCommand(authenticator, notificationsRepository, command.args());
             case "create-chat" -> new CreateChatCommand(authenticator, chatRepository, command.args());
+            case "exit-chat" -> new ExitChatCommand(authenticator, chatToken, command.args());
+            default -> null;
+        };
+    }
+
+    private Command buildWithParameters(ParsedCommand command) {
+        return switch (command.name()) {
+            case "login" -> new LoginCommand(authenticator, notificationsRepository, command.args());
+            case "register" -> new RegisterCommand(authenticator, userRepository, command.args());
+            case "add-friend" -> new AddFriendCommand(authenticator, userFriendsRepository, command.args());
+            case "create-group" -> new CreateGroupCommand(authenticator, friendGroupRepository, command.args());
+            case "split" -> new SplitCommand(authenticator, personalExpensesRepository, command.args());
+            case "split-group" -> new SplitWithGroupCommand(authenticator, groupExpensesRepository, command.args());
+            case "payed" -> new PayedCommand(authenticator, personalDebtsRepository, command.args());
+            case "payed-group" -> new PayedGroupCommand(authenticator, groupDebtsRepository, command.args());
             case "join-chat" -> new JoinChatCommand(authenticator, chatToken, command.args());
             case "send-message-chat" ->
                     new SendMessageInChatCommand(authenticator, chatToken, chatRepository, command.args());
-            case "exit-chat" -> new ExitChatCommand(authenticator, chatToken, command.args());
             case "export-recent-personal-expenses" ->
                     new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, command.args());
             case "export-recent-group-expenses" ->
                     new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, command.args());
-            default -> throw new IllegalArgumentException("Invalid command!");
+            default -> null;
         };
     }
 
     @Override
-    public Command build(String input) {
-        ParsedCommand command = new CommandParser().parse(input);
+    public Command build(String input, CommandParser parser) {
+        ParsedCommand command = parser.parse(input);
         if (command == null) {
             throw new IllegalArgumentException("Input cannot be null, blank, or empty!");
         }
 
-        return build(command);
+        Command builtCommand = buildParameterless(command);
+        if (builtCommand != null) {
+            return builtCommand;
+        }
+        builtCommand = buildWithParameters(command);
+        if (builtCommand != null) {
+            return builtCommand;
+        }
+
+        throw new IllegalArgumentException("Invalid command!");
     }
 }

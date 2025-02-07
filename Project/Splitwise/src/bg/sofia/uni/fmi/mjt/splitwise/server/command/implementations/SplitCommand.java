@@ -25,26 +25,33 @@ public class SplitCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         double amount;
         try {
             amount = Double.parseDouble(arguments[AMOUNT_INDEX]);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid amount!", e);
+            writer.println("Invalid amount!");
+            return false;
         }
 
-        expensesRepository.addExpense(authenticator.getAuthenticatedUser().username(),
-                arguments[USERNAME_INDEX],
-                amount,
-                arguments[REASON_INDEX],
-                LocalDateTime.now());
-        writer.println("Successfully split %s LV with %s for \"%s\"."
-                .formatted(amount, arguments[USERNAME_INDEX], arguments[REASON_INDEX]));
+        try {
+            expensesRepository.addExpense(authenticator.getAuthenticatedUser().username(),
+                    arguments[USERNAME_INDEX],
+                    amount,
+                    arguments[REASON_INDEX],
+                    LocalDateTime.now());
+            writer.println("Successfully split %s LV with %s for \"%s\"."
+                    .formatted(amount, arguments[USERNAME_INDEX], arguments[REASON_INDEX]));
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

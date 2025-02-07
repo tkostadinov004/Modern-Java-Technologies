@@ -16,7 +16,6 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converte
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.PersonalExpensesConverter;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -114,7 +113,7 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
         notificationsRepository.addNotificationForUser(participantUsername,
                 "%s noted that they paid %s LV for %s. You owe them %s LV."
                         .formatted(payerUsername, amount, reason, amount / 2.0),
-                LocalDateTime.now(), NotificationType.PERSONAL);
+                timestamp, NotificationType.PERSONAL);
         csvProcessor.writeToFile(new PersonalExpenseDTO(expense.payer().username(),
                         expense.debtor().username(),
                         expense.amount(), expense.reason(), expense.timestamp()));
@@ -122,12 +121,15 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
     }
 
     @Override
-    public void exportRecent(String username, int count, FileWriter writer) throws IOException {
+    public void exportRecent(String username, int count, BufferedWriter writer) throws IOException {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
         if (count <= 0) {
             throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
+        }
+        if (writer == null) {
+            throw new IllegalArgumentException("Writer cannot be null!");
         }
 
         List<String> expenses = getExpensesOf(username)
@@ -141,11 +143,9 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
                                 e.debtor()))
                 .toList();
 
-        try (BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
-            String content = String.join(System.lineSeparator(), expenses);
-            bufferedWriter.write(content);
-            bufferedWriter.write(System.lineSeparator());
-            bufferedWriter.flush();
-        }
+        String content = String.join(System.lineSeparator(), expenses);
+        writer.write(content);
+        writer.write(System.lineSeparator());
+        writer.flush();
     }
 }

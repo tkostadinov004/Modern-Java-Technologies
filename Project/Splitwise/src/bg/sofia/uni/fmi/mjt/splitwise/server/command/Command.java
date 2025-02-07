@@ -11,5 +11,5 @@ public abstract class Command {
 
     protected abstract void setArguments(int argumentsNeeded, String[] args);
 
-    public abstract void execute(PrintWriter writer);
+    public abstract boolean execute(PrintWriter writer);
 }

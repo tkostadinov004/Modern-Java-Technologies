@@ -5,9 +5,9 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.command.StandardCommand;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.CommandHelp;
 import bg.sofia.uni.fmi.mjt.splitwise.server.command.help.ParameterContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
 
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
 
 public class SplitWithGroupCommand extends StandardCommand {
     private static final int ARGUMENTS_NEEDED = 3;
@@ -18,32 +18,42 @@ public class SplitWithGroupCommand extends StandardCommand {
     private static final int GROUP_NAME_INDEX = 1;
     private static final int REASON_INDEX = 2;
 
-    public SplitWithGroupCommand(Authenticator authenticator, GroupExpensesRepository expensesRepository, String[] args) {
+    public SplitWithGroupCommand(Authenticator authenticator,
+                                 GroupExpensesRepository expensesRepository,
+                                 String[] args) {
         super(ARGUMENTS_NEEDED, args);
         this.authenticator = authenticator;
         this.expensesRepository = expensesRepository;
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         double amount;
         try {
             amount = Double.parseDouble(arguments[AMOUNT_INDEX]);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid amount!", e);
+            writer.println("Invalid amount!");
+            return false;
         }
 
-        expensesRepository.addExpense(authenticator.getAuthenticatedUser().username(),
-                arguments[GROUP_NAME_INDEX],
-                amount,
-                arguments[REASON_INDEX]);
-        writer.println("Successfully split %s LV with group %s for \"%s\"."
-                .formatted(amount, arguments[GROUP_NAME_INDEX], arguments[REASON_INDEX]));
+        try {
+            expensesRepository.addExpense(authenticator.getAuthenticatedUser().username(),
+                    arguments[GROUP_NAME_INDEX],
+                    amount,
+                    arguments[REASON_INDEX],
+                    LocalDateTime.now());
+            writer.println("Successfully split %s LV with group %s for \"%s\"."
+                    .formatted(amount, arguments[GROUP_NAME_INDEX], arguments[REASON_INDEX]));
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

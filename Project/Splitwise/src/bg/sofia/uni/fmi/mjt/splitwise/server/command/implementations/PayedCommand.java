@@ -24,25 +24,32 @@ public class PayedCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         double amount;
         try {
             amount = Double.parseDouble(arguments[AMOUNT_INDEX]);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid amount!", e);
+            writer.println("Invalid amount!");
+            return false;
         }
 
-        personalDebtsRepository.lowerDebtBurden(arguments[USERNAME_INDEX],
-                authenticator.getAuthenticatedUser().username(),
-                amount,
-                arguments[REASON_INDEX]);
-        writer.println("%s payed you %s LV for \"%s\"."
-                .formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX]));
+        try {
+            personalDebtsRepository.lowerDebtBurden(arguments[USERNAME_INDEX],
+                    authenticator.getAuthenticatedUser().username(),
+                    amount,
+                    arguments[REASON_INDEX]);
+            writer.println("%s payed you %s LV for \"%s\"."
+                    .formatted(arguments[USERNAME_INDEX], amount, arguments[REASON_INDEX]));
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

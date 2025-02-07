@@ -17,7 +17,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -37,7 +43,6 @@ public class DefaultPersonalExpensesRepositoryTest {
     private static final User user2 = new User("user2", "asd", "Test", "Test1");
     private static final User user3 = new User("user3", "asd", "Test", "Test1");
     private static final User user4 = new User("user4", "asd", "Test", "Test1");
-    private static final FriendGroup group = new FriendGroup("testGroup", Set.of(user1, user2, user3));
 
     @BeforeAll
     public static void setUp() {
@@ -69,24 +74,9 @@ public class DefaultPersonalExpensesRepositoryTest {
         when(dependencyContainer.get(UserRepository.class))
                 .thenReturn(userRepository);
 
-        FriendGroupRepository friendGroupRepository = mock();
-        when(friendGroupRepository.getGroup("testGroup"))
-                .thenReturn(Optional.of(group));
-        when(friendGroupRepository.getGroupsOf("user1"))
-                .thenReturn(Set.of(group));
-        when(friendGroupRepository.getGroupsOf("user2"))
-                .thenReturn(Set.of(group));
-        when(friendGroupRepository.getGroupsOf("user3"))
-                .thenReturn(Set.of(group));
-        when(dependencyContainer.get(FriendGroupRepository.class))
-                .thenReturn(friendGroupRepository);
-
         PersonalDebtsRepository personalDebtsRepository = mock();
         when(dependencyContainer.get(PersonalDebtsRepository.class))
                 .thenReturn(personalDebtsRepository);
-        GroupDebtsRepository groupDebtsRepository = mock();
-        when(dependencyContainer.get(GroupDebtsRepository.class))
-                .thenReturn(groupDebtsRepository);
     }
 
     @Test
@@ -207,5 +197,61 @@ public class DefaultPersonalExpensesRepositoryTest {
 
         assertThrows(NonExistentUserException.class, () -> expensesRepository.addExpense( "user2", "adsasdasdas", 100, "reason", LocalDateTime.now()),
                 "addExpense() should throw on non existing debtor");
+    }
+
+    @Test
+    public void testExportRecentThrowsOnInvalidUsername() {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( null,50, new BufferedWriter(new StringWriter())),
+                "exportRecent() should throw on null username");
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent("", 50,   new BufferedWriter(new StringWriter())),
+                "exportRecent() should throw on empty username");
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "   ", 50,  new BufferedWriter(new StringWriter())),
+                "exportRecent() should throw on blank username");
+    }
+
+    @Test
+    public void testExportRecentThrowsOnNegativeCount() {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "user1",-1, new BufferedWriter(new StringWriter())),
+                "exportRecent() should throw on negative count");
+    }
+
+    @Test
+    public void testExportRecentThrowsOnZeroCount() {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "user1",0, new BufferedWriter(new StringWriter())),
+                "exportRecent() should throw on negative count");
+    }
+
+    @Test
+    public void testExportRecentThrowsOnNullWriter() {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "user1",50, null),
+                "exportRecent() should throw on null writer");
+    }
+
+    @Test
+    public void testExportRecentExportsCorrectly() throws IOException {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        LocalDateTime now = LocalDateTime.now();
+        expensesRepository.addExpense("user1", "user2", 100, "bananas", now.minusDays(10));
+        expensesRepository.addExpense("user1", "user2", 100, "bananas", now.minusDays(20));
+        expensesRepository.addExpense("user1", "user3", 50, "another cost", now);
+
+        StringWriter stringWriter = new StringWriter();
+        BufferedWriter bufferedWriter = new BufferedWriter(stringWriter);
+
+        expensesRepository.exportRecent("user1", 2, bufferedWriter);
+
+        String expected = "%s: 50.0 [another cost] with %s".formatted(now, user3) + System.lineSeparator() +
+                        "%s: 100.0 [bananas] with %s".formatted(now.minusDays(10), user2) + System.lineSeparator();
+
+        assertEquals(expected, stringWriter.toString(),
+                "Expenses should be sorted in descending order by timestamp");
     }
 }

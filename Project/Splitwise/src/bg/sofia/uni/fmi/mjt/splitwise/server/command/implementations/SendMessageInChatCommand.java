@@ -29,23 +29,25 @@ public class SendMessageInChatCommand extends StandardCommand {
     private static final int MESSAGE_INDEX = 0;
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
         if (!chatToken.isInChat()) {
             writer.println("You have to be in a chat in order to send a message!");
-            return;
+            return false;
         }
 
         try {
             chatRepository.sendMessage(authenticator.getAuthenticatedUser().username(),
                     chatToken.getServer().code(),
                     arguments[MESSAGE_INDEX]);
-        } catch (ChatException e) {
+            return true;
+        } catch (ChatException | IllegalArgumentException e) {
             writer.println(e.getMessage());
         }
+        return false;
     }
 
     public static CommandHelp help() {

@@ -18,12 +18,14 @@ public class LogoutCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         try {
             authenticator.logout();
             writer.println("Successfully logged out!");
+            return true;
         } catch (NotAuthenticatedException e) {
             writer.println(e.getMessage());
+            return false;
         }
     }
 

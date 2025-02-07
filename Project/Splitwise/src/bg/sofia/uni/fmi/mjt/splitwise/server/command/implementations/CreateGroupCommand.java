@@ -25,17 +25,23 @@ public class CreateGroupCommand extends VariableArgumentsCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
         Set<String> groupParticipants = Arrays.stream(arguments).skip(1).collect(Collectors.toSet());
         groupParticipants.add(authenticator.getAuthenticatedUser().username());
 
-        friendGroupRepository.createGroup(arguments[GROUP_NAME_INDEX], groupParticipants);
-        writer.println("Successfully created group %s.".formatted(arguments[GROUP_NAME_INDEX]));
+        try {
+            friendGroupRepository.createGroup(arguments[GROUP_NAME_INDEX], groupParticipants);
+            writer.println("Successfully created group %s.".formatted(arguments[GROUP_NAME_INDEX]));
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
+        }
     }
 
     public static CommandHelp help() {

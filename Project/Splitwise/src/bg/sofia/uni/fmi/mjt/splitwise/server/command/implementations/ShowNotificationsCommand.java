@@ -24,20 +24,26 @@ public class ShowNotificationsCommand extends StandardCommand {
     }
 
     @Override
-    public void execute(PrintWriter writer) {
+    public boolean execute(PrintWriter writer) {
         if (!authenticator.isAuthenticated()) {
             writer.println("You have to be logged in!");
-            return;
+            return false;
         }
 
-        Set<Notification> notifications = notificationsRepository
-                .getNotificationForUser(authenticator.getAuthenticatedUser().username());
+        try {
+            Set<Notification> notifications = notificationsRepository
+                    .getNotificationsForUser(authenticator.getAuthenticatedUser().username());
 
-        if (!notifications.isEmpty()) {
-            notifications
-                    .forEach(notification -> writer.println("* %s".formatted(notification)));
-        } else {
-            writer.println("<no notifications>");
+            if (!notifications.isEmpty()) {
+                notifications
+                        .forEach(notification -> writer.println("* %s".formatted(notification)));
+            } else {
+                writer.println("<no notifications>");
+            }
+            return true;
+        } catch (RuntimeException e) {
+            writer.println(e.getMessage());
+            return false;
         }
     }
 

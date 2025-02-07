@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -39,7 +40,7 @@ public abstract class CsvProcessor<T> {
                     .readAll()
                     .stream()
                     .map(mappingFunction)
-                    .filter(obj -> obj != null)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
         } catch (IOException | CsvException e) {
             throw new RuntimeException(e);
@@ -123,13 +124,5 @@ public abstract class CsvProcessor<T> {
         }
 
         data.forEach(this::writeToFile);
-    }
-
-    public synchronized boolean contains(T obj) {
-        return data.contains(obj);
-    }
-
-    public synchronized boolean contains(Predicate<T> predicate) {
-        return data.stream().anyMatch(predicate);
     }
 }

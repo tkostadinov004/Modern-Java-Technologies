@@ -16,7 +16,7 @@ public class CommandParser {
                 isInQuotes = !isInQuotes;
             } else if (isInQuotes || !Character.isWhitespace(c)) {
                 curr.append(c);
-            } else if (Character.isWhitespace(c)) {
+            } else if (Character.isWhitespace(c) && !curr.isEmpty()) {
                 result.add(curr.toString());
                 curr.setLength(0);
             }

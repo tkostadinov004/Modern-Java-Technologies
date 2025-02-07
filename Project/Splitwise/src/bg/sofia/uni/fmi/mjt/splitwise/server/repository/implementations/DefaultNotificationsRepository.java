@@ -36,7 +36,7 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
     }
 
     @Override
-    public Set<Notification> getNotificationForUser(String username) {
+    public Set<Notification> getNotificationsForUser(String username) {
         if (username == null || username.isEmpty() || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
