@@ -14,10 +14,12 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converte
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.NotificationsConverter;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class DefaultNotificationsRepository implements NotificationsRepository {
@@ -31,8 +33,9 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
 
         DataConverter<Map<User, Set<Notification>>, Notification, NotificationDTO> converter =
                 new NotificationsConverter(csvProcessor, userRepository);
-        this.notificationsMap = converter.populate(Collectors.groupingBy(Notification::receiver,
-                Collectors.mapping(rel -> rel, Collectors.toSet())));
+        this.notificationsMap = new ConcurrentHashMap<>(converter.populate(Collectors.groupingBy(Notification::receiver,
+                Collectors.mapping(rel -> rel,
+                        Collectors.toCollection(() -> Collections.synchronizedSet(new HashSet<>()))))));
     }
 
     @Override
@@ -46,10 +49,12 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        if (!notificationsMap.containsKey(user.get())) {
-            return Set.of();
+        synchronized (notificationsMap) {
+            if (!notificationsMap.containsKey(user.get())) {
+                return Set.of();
+            }
+            return new HashSet<>(notificationsMap.get(user.get()));
         }
-        return notificationsMap.get(user.get());
     }
 
     @Override
@@ -75,7 +80,7 @@ public class DefaultNotificationsRepository implements NotificationsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        notificationsMap.putIfAbsent(user.get(), new LinkedHashSet<>());
+        notificationsMap.putIfAbsent(user.get(), Collections.synchronizedSet(new HashSet<>()));
 
         Notification notification = new Notification(user.get(), notificationContent, timeSent, type);
         notificationsMap.get(user.get()).add(notification);

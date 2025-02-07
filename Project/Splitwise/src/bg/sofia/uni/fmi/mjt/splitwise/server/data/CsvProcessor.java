@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -31,13 +32,13 @@ public abstract class CsvProcessor<T> {
 
     protected synchronized Set<T> readAll(Function<String[], T> mappingFunction) {
         if (data != null) {
-            return data;
+            return new HashSet<>(data);
         }
 
-        Set<T> result;
         try (reader) {
-            result = reader
-                    .readAll()
+            List<String[]> a = reader
+                    .readAll();
+            data = a
                     .stream()
                     .map(mappingFunction)
                     .filter(Objects::nonNull)
@@ -45,7 +46,7 @@ public abstract class CsvProcessor<T> {
         } catch (IOException | CsvException e) {
             throw new RuntimeException(e);
         }
-        return result;
+        return data;
     }
 
     public abstract Set<T> readAll();
@@ -73,14 +74,12 @@ public abstract class CsvProcessor<T> {
                 .stream()
                 .filter(obj -> !predicate.test(obj))
                 .toList();
+        data.clear();
 
         try {
             Files.deleteIfExists(Path.of(filePath));
-            if (validObjects.isEmpty()) {
-                new File(filePath).createNewFile();
-            } else {
-                validObjects.forEach(this::writeToFile);
-            }
+            new File(filePath).createNewFile();
+            validObjects.forEach(this::writeToFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -95,14 +94,12 @@ public abstract class CsvProcessor<T> {
                 .stream()
                 .filter(object -> !obj.equals(object))
                 .toList();
+        data.clear();
 
         try {
             Files.deleteIfExists(Path.of(filePath));
-            if (validObjects.isEmpty()) {
-                new File(filePath).createNewFile();
-            } else {
-                validObjects.forEach(this::writeToFile);
-            }
+            new File(filePath).createNewFile();
+            validObjects.forEach(this::writeToFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -112,17 +109,18 @@ public abstract class CsvProcessor<T> {
         if (data == null) {
             data = readAll();
         }
-        data = data
+        Set<T> modifiedData = data
                 .stream()
                 .map(obj -> obj.equals(oldValue) ? newValue : obj)
                 .collect(Collectors.toSet());
+        data.clear();
 
         try {
             Files.deleteIfExists(Path.of(filePath));
+            new File(filePath).createNewFile();
+            modifiedData.forEach(this::writeToFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        data.forEach(this::writeToFile);
     }
 }

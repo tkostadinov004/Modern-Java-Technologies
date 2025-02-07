@@ -13,7 +13,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepo
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentDebtException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentFriendGroupException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -213,7 +213,7 @@ public class DefaultGroupDebtsRepositoryTest {
     public void testLowerDebtBurdenThrowsOnNonexistentGroup() {
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
 
-        assertThrows(NonExistingGroupException.class, () -> groupDebtsRepository.lowerDebtBurden( "user1", "user2", "asdasdasdasd", 50, "asdasd"),
+        assertThrows(NonExistentFriendGroupException.class, () -> groupDebtsRepository.lowerDebtBurden( "user1", "user2", "asdasdasdasd", 50, "asdasd"),
                 "lowerDebtBurden() should throw on nonexisting group");
     }
 
@@ -417,7 +417,7 @@ public class DefaultGroupDebtsRepositoryTest {
     public void testIncreaseDebtBurdenThrowsOnNonexistentGroup() {
         GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
 
-        assertThrows(NonExistingGroupException.class, () -> groupDebtsRepository.increaseDebtBurden( "user1", "user2","fdgdfg", 50, "asdasd"),
+        assertThrows(NonExistentFriendGroupException.class, () -> groupDebtsRepository.increaseDebtBurden( "user1", "user2","fdgdfg", 50, "asdasd"),
                 "increaseDebtBurden() should throw on nonexisting group");
     }
 

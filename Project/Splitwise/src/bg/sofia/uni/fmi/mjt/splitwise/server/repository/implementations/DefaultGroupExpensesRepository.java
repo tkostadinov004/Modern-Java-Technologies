@@ -14,19 +14,21 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentFriendGroupException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.GroupExpensesConverter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -49,8 +51,9 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
 
         DataConverter<Map<User, Set<GroupExpense>>, GroupExpense, GroupExpenseDTO> converter =
                 new GroupExpensesConverter(csvProcessor, userRepository, friendGroupRepository);
-        this.expensesMap = converter.populate(Collectors.groupingBy(GroupExpense::payer,
-                Collectors.mapping(expense -> expense, Collectors.toSet())));
+        this.expensesMap = new ConcurrentHashMap<>(converter.populate(Collectors.groupingBy(GroupExpense::payer,
+                Collectors.mapping(expense -> expense,
+                        Collectors.toCollection(() -> Collections.synchronizedSet(new HashSet<>()))))));
     }
 
     @Override
@@ -64,11 +67,13 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        if (!expensesMap.containsKey(user.get())) {
-            return Set.of();
-        }
+        synchronized (expensesMap) {
+            if (!expensesMap.containsKey(user.get())) {
+                return Set.of();
+            }
 
-        return expensesMap.get(user.get());
+            return new HashSet<>(expensesMap.get(user.get()));
+        }
     }
 
     private void addExpense(FriendGroup group,
@@ -76,27 +81,30 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
                             double amount,
                             String reason,
                             LocalDateTime timestamp) {
-        Set<User> participants = group.participants()
-                .stream().filter(user -> !user.equals(payer))
-                .collect(Collectors.toSet());
+        synchronized (group) {
+            Set<User> participants = group.participants()
+                    .stream().filter(user -> !user.equals(payer))
+                    .collect(Collectors.toSet());
 
-        GroupExpense expense = new GroupExpense(payer, amount, reason, group, timestamp);
-        expensesMap.putIfAbsent(payer, new LinkedHashSet<>());
-        expensesMap.get(payer).add(expense);
+            GroupExpense expense = new GroupExpense(payer, amount, reason, group, timestamp);
+            expensesMap.putIfAbsent(payer, Collections.synchronizedSet(new HashSet<>()));
+            expensesMap.get(payer).add(expense);
 
-        double amountPerPerson = amount / (participants.size() + 1);
-        participants.forEach(user -> groupDebtsRepository.increaseDebtBurden(user.username(),
-                payer.username(), group.name(), amountPerPerson, reason));
-        participants.forEach(user -> notificationsRepository.addNotificationForUser(user.username(),
-                "%s noted that they paid %s LV in your group %s for %s. You owe them %s LV."
-                        .formatted(payer.username(), amount, group.name(), reason, amountPerPerson),
-                timestamp, NotificationType.GROUP));
-        csvProcessor.writeToFile(new GroupExpenseDTO(expense.payer().username(),
+            double amountPerPerson = amount / (participants.size() + 1);
+            participants.forEach(user -> groupDebtsRepository.increaseDebtBurden(user.username(),
+                    payer.username(), group.name(), amountPerPerson, reason));
+            participants.forEach(user -> notificationsRepository.addNotificationForUser(user.username(),
+                    "%s noted that they paid %s LV in your group %s for %s. You owe them %s LV."
+                            .formatted(payer.username(), amount, group.name(), reason, amountPerPerson),
+                    timestamp, NotificationType.GROUP));
+
+            csvProcessor.writeToFile(new GroupExpenseDTO(expense.payer().username(),
                 expense.amount(),
                 expense.reason(),
                 expense.group().name(),
                 expense.timestamp()));
-        logger.info("%s paid %s LV for %s in group %s.".formatted(payer.username(), amount, reason, group.name()));
+            logger.info("%s paid %s LV for %s in group %s.".formatted(payer.username(), amount, reason, group.name()));
+        }
     }
 
     private void validateArguments(String debtorUsername,
@@ -136,7 +144,7 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
 
         Optional<FriendGroup> group = friendGroupRepository.getGroup(groupName);
         if (group.isEmpty()) {
-            throw new NonExistingGroupException("Group with name %s does not exist!".formatted(payerUsername));
+            throw new NonExistentFriendGroupException("Group with name %s does not exist!".formatted(payerUsername));
         }
 
         addExpense(group.get(), payer.get(), amount, reason, timestamp);
@@ -144,30 +152,32 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
 
     @Override
     public void exportRecent(String username, int count, BufferedWriter writer) throws IOException {
-        if (username == null || username.isEmpty() || username.isBlank()) {
-            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
-        }
-        if (count <= 0) {
-            throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
-        }
-        if (writer == null) {
-            throw new IllegalArgumentException("Writer cannot be null!");
-        }
+        synchronized (expensesMap) {
+            if (username == null || username.isEmpty() || username.isBlank()) {
+                throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+            }
+            if (count <= 0) {
+                throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
+            }
+            if (writer == null) {
+                throw new IllegalArgumentException("Writer cannot be null!");
+            }
 
-        List<String> expenses = getExpensesOf(username)
-                .stream()
-                .sorted(Comparator.comparing(GroupExpense::timestamp).reversed())
-                .limit(count)
-                .map(e -> "%s: %s [%s] in group %s"
-                        .formatted(e.timestamp(),
-                                e.amount(),
-                                e.reason(),
-                                e.group()))
-                .toList();
+            List<String> expenses = getExpensesOf(username)
+                    .stream()
+                    .sorted(Comparator.comparing(GroupExpense::timestamp).reversed())
+                    .limit(count)
+                    .map(e -> "%s: %s [%s] in group %s"
+                            .formatted(e.timestamp(),
+                                    e.amount(),
+                                    e.reason(),
+                                    e.group()))
+                    .toList();
 
-        String content = String.join(System.lineSeparator(), expenses);
-        writer.write(content);
-        writer.write(System.lineSeparator());
-        writer.flush();
+            String content = String.join(System.lineSeparator(), expenses);
+            writer.write(content);
+            writer.write(System.lineSeparator());
+            writer.flush();
+        }
     }
 }

@@ -8,15 +8,15 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.User;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.ChatRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingChatRoomException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentChatRoomException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class DefaultChatRepository implements ChatRepository {
@@ -31,9 +31,9 @@ public class DefaultChatRepository implements ChatRepository {
         this.logger = dependencyContainer.get(Logger.class);
         this.mainServerAddress = mainServerAddress;
         this.userRepository = dependencyContainer.get(UserRepository.class);
-        this.chatServers = new HashMap<>();
-        this.socketUsers = new HashMap<>();
-        this.userSockets = new HashMap<>();
+        this.chatServers = new ConcurrentHashMap<>();
+        this.socketUsers = new ConcurrentHashMap<>();
+        this.userSockets = new ConcurrentHashMap<>();
     }
 
     private Socket connectUser(String username, String roomCode, ChatServer server) throws ChatException {
@@ -67,7 +67,7 @@ public class DefaultChatRepository implements ChatRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
         if (!containsRoom(roomCode)) {
-            throw new NonExistingChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
+            throw new NonExistentChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
         }
         ChatServer server = chatServers.get(roomCode);
 
@@ -75,13 +75,13 @@ public class DefaultChatRepository implements ChatRepository {
     }
 
     @Override
-    public void sendMessage(String senderUsername, String roomCode, String message) {
+    public void sendMessage(String senderUsername, String roomCode, String message) throws NonExistentChatRoomException {
         Optional<Socket> senderSocket = userRepository.getSocketByUsername(senderUsername);
         if (senderSocket.isEmpty()) {
             throw new NonExistentUserException("User is not currently logged in!");
         }
         if (!containsRoom(roomCode)) {
-            throw new NonExistingChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
+            throw new NonExistentChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
         }
 
         DefaultChatServer chatServer = chatServers.get(roomCode);
@@ -114,9 +114,9 @@ public class DefaultChatRepository implements ChatRepository {
     }
 
     @Override
-    public void shutdownRoom(String roomCode) {
+    public void shutdownRoom(String roomCode) throws NonExistentChatRoomException {
         if (!containsRoom(roomCode)) {
-            throw new NonExistingChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
+            throw new NonExistentChatRoomException("Chat room with code %s does not exist".formatted(roomCode));
         }
 
         DefaultChatServer server = chatServers.get(roomCode);
@@ -156,6 +156,9 @@ public class DefaultChatRepository implements ChatRepository {
                     throw new ChatException("Socket not found!");
                 }
                 server.get().disconnectUser(userSockets.get(socket.get()));
+                if (server.get().participantsCount() == 0) {
+                    shutdownRoom(roomCode);
+                }
                 logger.info("User %s disconnected from group with code %s."
                         .formatted(username, roomCode));
             } catch (IOException e) {

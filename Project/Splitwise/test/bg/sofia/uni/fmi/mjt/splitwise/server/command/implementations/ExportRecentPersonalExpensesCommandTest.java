@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -50,6 +51,9 @@ public class ExportRecentPersonalExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(false);
 
         PersonalExpensesRepository personalExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(personalExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
 
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"10", "file"});
@@ -68,6 +72,9 @@ public class ExportRecentPersonalExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(true);
 
         PersonalExpensesRepository personalExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(personalExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
 
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"lhjkjh10", "file"});
@@ -86,6 +93,9 @@ public class ExportRecentPersonalExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(true);
 
         PersonalExpensesRepository personalExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(personalExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
 
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"10", "file"});
@@ -105,6 +115,10 @@ public class ExportRecentPersonalExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(true);
 
         PersonalExpensesRepository personalExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(personalExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
+
         doThrow(IOException.class)
                 .when(personalExpensesRepository)
                 .exportRecent(same("testuser"), same(10), any());

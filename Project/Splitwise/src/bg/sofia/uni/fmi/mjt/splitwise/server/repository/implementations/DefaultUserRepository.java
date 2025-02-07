@@ -13,11 +13,12 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converte
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.UserConverter;
 
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class DefaultUserRepository implements UserRepository {
@@ -29,12 +30,14 @@ public class DefaultUserRepository implements UserRepository {
         this.csvProcessor = dependencyContainer.get(UserCsvProcessor.class);
 
         DataConverter<Set<User>, User, User> dataConverter = new UserConverter(csvProcessor);
-        this.users = new HashSet<>(dataConverter.populate(Collectors.toSet()));
-        this.userSockets = new HashMap<>();
+        this.users = Collections.synchronizedSet(new HashSet<>(dataConverter.populate(Collectors.toSet())));
+        this.userSockets = new ConcurrentHashMap<>();
     }
 
     public Set<User> getAllUsers() {
-        return users;
+        synchronized (users) {
+            return new HashSet<>(users);
+        }
     }
 
     @Override
@@ -52,10 +55,12 @@ public class DefaultUserRepository implements UserRepository {
             throw new IllegalArgumentException("Username cannot be null, blank or empty!");
         }
 
-        return users
-                .stream()
-                .filter(user -> user.username().equals(username))
-                .findFirst();
+        synchronized (users) {
+            return users
+                    .stream()
+                    .filter(user -> user.username().equals(username))
+                    .findFirst();
+        }
     }
 
     @Override
@@ -96,7 +101,6 @@ public class DefaultUserRepository implements UserRepository {
         if (lastName == null || lastName.isEmpty() || lastName.isBlank()) {
             throw new IllegalArgumentException("Last name cannot be null, blank or empty!");
         }
-
         if (containsUser(username)) {
             throw new AlreadyRegisteredException("A user with this username is already registered!");
         }

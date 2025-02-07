@@ -15,6 +15,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUse
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.PersonalDebtsConverter;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
 
         DataConverter<Set<PersonalDebt>, PersonalDebt, PersonalDebtDTO> converter =
                 new PersonalDebtsConverter(csvProcessor, userRepository);
-        this.personalDebts = converter.populate(Collectors.toSet());
+        this.personalDebts = Collections.synchronizedSet(new HashSet<>(converter.populate(Collectors.toSet())));
     }
 
     @Override
@@ -47,20 +48,24 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        return personalDebts
-                .stream()
-                .filter(debt -> debt.debtor().equals(user.get()) || debt.recipient().equals(user.get()))
-                .collect(Collectors.toCollection(HashSet::new));
+        synchronized (personalDebts) {
+            return personalDebts
+                    .stream()
+                    .filter(debt -> debt.debtor().equals(user.get()) || debt.recipient().equals(user.get()))
+                    .collect(Collectors.toCollection(HashSet::new));
+        }
     }
 
     private Optional<PersonalDebt> getDebtOfDebtorAndRecipient(User debtor, User recipient, String reason) {
-        return personalDebts
-                .stream()
-                .filter(debt ->
-                        ((debt.debtor().equals(debtor) && debt.recipient().equals(recipient)) ||
-                        (debt.recipient().equals(debtor) && debt.debtor().equals(recipient))) &&
-                        reason.equals(debt.reason()))
-                .findFirst();
+        synchronized (personalDebts) {
+            return personalDebts
+                       .stream()
+                       .filter(debt ->
+                               ((debt.debtor().equals(debtor) && debt.recipient().equals(recipient)) ||
+                                       (debt.recipient().equals(debtor) && debt.debtor().equals(recipient))) &&
+                                       reason.equals(debt.reason()))
+                       .findFirst();
+        }
     }
 
     private void addDebt(User debtor, User recipient, double amount, String reason) {
@@ -69,29 +74,34 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
         csvProcessor.writeToFile(new PersonalDebtDTO(debtor.username(), recipient.username(), amount, reason));
     }
 
-    private void lowerDebtBurden(PersonalDebt debt, double amount) {
-        double newAmount = debt.amount() - amount;
+    private void lowerDebtBurden(PersonalDebt debt, double amount, boolean isReversed) {
+        synchronized (personalDebts) {
+            double newAmount = debt.amount() - amount;
 
-        PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
-                debt.amount(), debt.reason());
+            PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
+                    debt.amount(), debt.reason());
 
-        if (newAmount <= 0) {
-            personalDebts.remove(debt);
-            csvProcessor.remove(crudDTO);
-        } else {
-            debt.updateAmount(newAmount);
+            if (newAmount <= 0) {
+                personalDebts.remove(debt);
+                csvProcessor.remove(crudDTO);
+                if (isReversed && newAmount < 0) {
+                    addDebt(debt.recipient(), debt.debtor(), Math.abs(newAmount), debt.reason());
+                }
+            } else {
+                debt.updateAmount(newAmount);
 
-            PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
-                    debt.recipient().username(),
-                    newAmount,
-                    debt.reason());
+                PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
+                        debt.recipient().username(),
+                        newAmount,
+                        debt.reason());
 
-            csvProcessor.modify(crudDTO, updatedDebtDTO);
+                csvProcessor.modify(crudDTO, updatedDebtDTO);
+            }
+            notificationsRepository.addNotificationForUser(debt.debtor().username(),
+                    "%s approved your payment of %s LV for %s. You now owe them %s LV."
+                            .formatted(debt.recipient().username(), amount, debt.reason(), newAmount),
+                    NotificationType.PERSONAL);
         }
-        notificationsRepository.addNotificationForUser(debt.debtor().username(),
-                "%s approved your payment of %s LV for %s. You now owe them %s LV."
-                        .formatted(debt.recipient().username(), amount, debt.reason(), newAmount),
-                NotificationType.PERSONAL);
     }
 
     private void validateArguments(String debtorUsername, String recipientUsername, double amount, String reason) {
@@ -125,27 +135,31 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(recipientUsername));
         }
 
-        Optional<PersonalDebt> debt = getDebtOfDebtorAndRecipient(debtor.get(), recipient.get(), reason);
-        if (debt.isEmpty()) {
-            throw new NonExistentDebtException("Debt with debtor %s and reason \"%s\" doesn't exist!"
-                    .formatted(debtorUsername, reason));
+        synchronized (personalDebts) {
+            Optional<PersonalDebt> debt = getDebtOfDebtorAndRecipient(debtor.get(), recipient.get(), reason);
+            if (debt.isEmpty()) {
+                throw new NonExistentDebtException("Debt with debtor %s and reason \"%s\" doesn't exist!"
+                        .formatted(debtorUsername, reason));
+            }
+            lowerDebtBurden(debt.get(), amount, false);
         }
-        lowerDebtBurden(debt.get(), amount);
     }
 
     private void increaseDebtBurden(PersonalDebt debt, double amount) {
-        double newAmount = debt.amount() + amount;
-        PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
-                debt.amount(), debt.reason());
+        synchronized (personalDebts) {
+            double newAmount = debt.amount() + amount;
+            PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
+                    debt.amount(), debt.reason());
 
-        debt.updateAmount(newAmount);
+            debt.updateAmount(newAmount);
 
-        PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
-                debt.recipient().username(),
-                newAmount,
-                debt.reason());
+            PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
+                    debt.recipient().username(),
+                    newAmount,
+                    debt.reason());
 
-        csvProcessor.modify(crudDTO, updatedDebtDTO);
+            csvProcessor.modify(crudDTO, updatedDebtDTO);
+        }
     }
 
     @Override
@@ -160,12 +174,16 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
         if (recipient.isEmpty()) {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(recipientUsername));
         }
-        Optional<PersonalDebt> debt = getDebtOfDebtorAndRecipient(debtor.get(), recipient.get(), reason);
-        if (debt.isEmpty()) {
-            addDebt(debtor.get(), recipient.get(), amount, reason);
-            return;
-        }
 
-        increaseDebtBurden(debt.get(), amount);
+        synchronized (personalDebts) {
+            Optional<PersonalDebt> debt = getDebtOfDebtorAndRecipient(debtor.get(), recipient.get(), reason);
+            if (debt.isEmpty()) {
+                addDebt(debtor.get(), recipient.get(), amount, reason);
+            } else if (debt.get().debtor().equals(recipient.get())) {
+                lowerDebtBurden(debt.get(), amount, true);
+            } else {
+                increaseDebtBurden(debt.get(), amount);
+            }
+        }
     }
 }

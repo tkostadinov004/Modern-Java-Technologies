@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.util.Map;
 
 public interface ChatServer {
+    int participantsCount();
+
     String code();
 
     InetSocketAddress address();

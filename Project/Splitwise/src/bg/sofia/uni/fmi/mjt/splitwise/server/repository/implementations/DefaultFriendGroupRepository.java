@@ -13,6 +13,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUse
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.FriendGroupConverter;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
 
         DataConverter<Set<FriendGroup>, FriendGroup, FriendGroupDTO> converter =
                 new FriendGroupConverter(csvProcessor, userRepository);
-        this.friendGroups = converter.populate(Collectors.toSet());
+        this.friendGroups = Collections.synchronizedSet(new HashSet<>(converter.populate(Collectors.toSet())));
     }
 
     @Override
@@ -43,10 +44,12 @@ public class DefaultFriendGroupRepository implements FriendGroupRepository {
             throw new NonExistentUserException("User with name %s does not exist!".formatted(username));
         }
 
-        return friendGroups
-                .stream()
-                .filter(group -> group.participants().contains(user.get()))
-                .collect(Collectors.toSet());
+        synchronized (friendGroups) {
+            return friendGroups
+                    .stream()
+                    .filter(group -> group.participants().contains(user.get()))
+                    .collect(Collectors.toCollection(HashSet::new));
+        }
     }
 
     @Override

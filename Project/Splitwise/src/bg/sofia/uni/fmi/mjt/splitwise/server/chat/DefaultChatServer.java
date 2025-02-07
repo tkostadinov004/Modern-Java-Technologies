@@ -27,6 +27,11 @@ public class DefaultChatServer implements ChatServer {
         this.clients = new HashSet<>();
     }
 
+    @Override
+    public synchronized int participantsCount() {
+        return clients.size();
+    }
+
     public String code() {
         return code;
     }
@@ -98,8 +103,5 @@ public class DefaultChatServer implements ChatServer {
         }
         socketToRemove.get().close();
         clients.remove(socketToRemove.get());
-        if (clients.isEmpty()) {
-            shutdown();
-        }
     }
 }

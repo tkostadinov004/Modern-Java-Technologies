@@ -13,10 +13,12 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUse
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.UserFriendsConverter;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class DefaultUserFriendsRepository implements UserFriendsRepository {
@@ -30,8 +32,9 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
 
         DataConverter<Map<User, Set<User>>, FriendshipRelation, FriendshipRelationDTO> converter =
                 new UserFriendsConverter(csvProcessor, userRepository);
-        this.friendMap = converter.populate(Collectors.groupingBy(FriendshipRelation::first,
-                Collectors.mapping(FriendshipRelation::second, Collectors.toSet())));
+        this.friendMap = new ConcurrentHashMap<>(converter.populate(Collectors.groupingBy(FriendshipRelation::first,
+                Collectors.mapping(FriendshipRelation::second,
+                        Collectors.toCollection(() -> Collections.synchronizedSet(new HashSet<>()))))));
     }
 
     @Override
@@ -66,10 +69,26 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        if (!friendMap.containsKey(user.get())) {
-            return Set.of();
+        synchronized (friendMap) {
+            if (!friendMap.containsKey(user.get())) {
+                return Set.of();
+            }
+            return new HashSet<>(friendMap.get(user.get()));
         }
-        return friendMap.get(user.get());
+    }
+
+    private void makeFriends(User first, User second) {
+        friendMap.putIfAbsent(first, Collections.synchronizedSet(new HashSet<>()));
+        friendMap.putIfAbsent(second, Collections.synchronizedSet(new HashSet<>()));
+        synchronized (friendMap) {
+            if (friendMap.get(first).contains(second)) {
+                throw new AlreadyFriendsException("User %s is already friends with %s!"
+                        .formatted(first.username(), second.username()));
+            }
+        }
+        friendMap.get(first).add(second);
+        friendMap.get(second).add(first);
+        csvProcessor.writeToFile(new FriendshipRelationDTO(first.username(), second.username()));
     }
 
     @Override
@@ -85,22 +104,14 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
         }
 
         Optional<User> first = userRepository.getUserByUsername(firstUsername);
-        Optional<User> second = userRepository.getUserByUsername(secondUsername);
         if (first.isEmpty()) {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(firstUsername));
         }
+        Optional<User> second = userRepository.getUserByUsername(secondUsername);
         if (second.isEmpty()) {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(secondUsername));
         }
 
-        friendMap.putIfAbsent(first.get(), new HashSet<>());
-        friendMap.putIfAbsent(second.get(), new HashSet<>());
-        if (friendMap.get(first.get()).contains(second.get())) {
-            throw new AlreadyFriendsException("User %s is already friends with %s!"
-                    .formatted(firstUsername, secondUsername));
-        }
-        friendMap.get(first.get()).add(second.get());
-        friendMap.get(second.get()).add(first.get());
-        csvProcessor.writeToFile(new FriendshipRelationDTO(firstUsername, secondUsername));
+        makeFriends(first.get(), second.get());
     }
 }

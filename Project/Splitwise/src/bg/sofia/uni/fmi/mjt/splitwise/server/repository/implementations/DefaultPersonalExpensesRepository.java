@@ -18,12 +18,14 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converte
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -44,8 +46,9 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
 
         DataConverter<Map<User, Set<PersonalExpense>>, PersonalExpense, PersonalExpenseDTO> converter =
                 new PersonalExpensesConverter(csvProcessor, userRepository);
-        this.expensesMap = converter.populate(Collectors.groupingBy(PersonalExpense::payer,
-                Collectors.mapping(expense -> expense, Collectors.toSet())));
+        this.expensesMap = new ConcurrentHashMap<>(converter.populate(Collectors.groupingBy(PersonalExpense::payer,
+                Collectors.mapping(expense -> expense,
+                        Collectors.toCollection(() -> Collections.synchronizedSet(new HashSet<>()))))));
     }
 
     @Override
@@ -59,11 +62,13 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
             throw new NonExistentUserException("User with username %s does not exist!".formatted(username));
         }
 
-        if (!expensesMap.containsKey(user.get())) {
-            return Set.of();
-        }
+        synchronized (expensesMap) {
+            if (!expensesMap.containsKey(user.get())) {
+                return Set.of();
+            }
 
-        return expensesMap.get(user.get());
+            return new HashSet<>(expensesMap.get(user.get()));
+        }
     }
 
     private void validateArguments(String debtorUsername,
@@ -105,7 +110,7 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
             throw new NonExistentUserException("User with username %s does not exist!".formatted(participantUsername));
         }
 
-        expensesMap.putIfAbsent(payer.get(), new LinkedHashSet<>());
+        expensesMap.putIfAbsent(payer.get(), Collections.synchronizedSet(new HashSet<>()));
         PersonalExpense expense = new PersonalExpense(payer.get(), participant.get(), amount, reason,
                 timestamp);
         expensesMap.get(payer.get()).add(expense);
@@ -122,30 +127,32 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
 
     @Override
     public void exportRecent(String username, int count, BufferedWriter writer) throws IOException {
-        if (username == null || username.isEmpty() || username.isBlank()) {
-            throw new IllegalArgumentException("Username cannot be null, blank or empty!");
-        }
-        if (count <= 0) {
-            throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
-        }
-        if (writer == null) {
-            throw new IllegalArgumentException("Writer cannot be null!");
-        }
+        synchronized (expensesMap) {
+            if (username == null || username.isEmpty() || username.isBlank()) {
+                throw new IllegalArgumentException("Username cannot be null, blank or empty!");
+            }
+            if (count <= 0) {
+                throw new IllegalArgumentException("Count cannot be less than or equal to 0!");
+            }
+            if (writer == null) {
+                throw new IllegalArgumentException("Writer cannot be null!");
+            }
 
-        List<String> expenses = getExpensesOf(username)
-                .stream()
-                .sorted(Comparator.comparing(PersonalExpense::timestamp).reversed())
-                .limit(count)
-                .map(e -> "%s: %s [%s] with %s"
-                        .formatted(e.timestamp(),
-                                e.amount(),
-                                e.reason(),
-                                e.debtor()))
-                .toList();
+            List<String> expenses = getExpensesOf(username)
+                    .stream()
+                    .sorted(Comparator.comparing(PersonalExpense::timestamp).reversed())
+                    .limit(count)
+                    .map(e -> "%s: %s [%s] with %s"
+                            .formatted(e.timestamp(),
+                                    e.amount(),
+                                    e.reason(),
+                                    e.debtor()))
+                    .toList();
 
-        String content = String.join(System.lineSeparator(), expenses);
-        writer.write(content);
-        writer.write(System.lineSeparator());
-        writer.flush();
+            String content = String.join(System.lineSeparator(), expenses);
+            writer.write(content);
+            writer.write(System.lineSeparator());
+            writer.flush();
+        }
     }
 }

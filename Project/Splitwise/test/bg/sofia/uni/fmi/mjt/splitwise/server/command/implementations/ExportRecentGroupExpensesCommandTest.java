@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -52,6 +53,9 @@ public class ExportRecentGroupExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(false);
 
         GroupExpensesRepository groupExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(groupExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
 
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "10", "file"});
@@ -70,6 +74,9 @@ public class ExportRecentGroupExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(true);
 
         GroupExpensesRepository groupExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(groupExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
 
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "lhjkjh10", "file"});
@@ -88,6 +95,9 @@ public class ExportRecentGroupExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(true);
 
         GroupExpensesRepository groupExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(groupExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
 
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "10", "file"});
@@ -107,6 +117,9 @@ public class ExportRecentGroupExpensesCommandTest {
         when(authenticator.isAuthenticated()).thenReturn(true);
 
         GroupExpensesRepository groupExpensesRepository = mock();
+        doAnswer(invocationOnMock -> null)
+                .when(groupExpensesRepository)
+                .exportRecent(anyString(), anyInt(), any());
         doThrow(IOException.class)
                 .when(groupExpensesRepository)
                 .exportRecent(same("testuser"), same(10), any());

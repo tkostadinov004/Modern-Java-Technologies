@@ -1,7 +1,6 @@
 package bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations;
 
 import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.GroupExpensesCsvProcessor;
-import bg.sofia.uni.fmi.mjt.splitwise.server.data.implementations.GroupExpensesCsvProcessor;
 import bg.sofia.uni.fmi.mjt.splitwise.server.dependency.DependencyContainer;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.FriendGroup;
 import bg.sofia.uni.fmi.mjt.splitwise.server.models.GroupExpense;
@@ -10,11 +9,9 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRep
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupExpensesRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
-import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistingGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentFriendGroupException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -206,7 +203,7 @@ public class DefaultGroupExpensesRepositoryTest {
     public void testAddExpenseOfThrowsOnNonexistentGroup() {
         GroupExpensesRepository expensesRepository = new DefaultGroupExpensesRepository(dependencyContainer);
 
-        assertThrows(NonExistingGroupException.class, () -> expensesRepository.addExpense( "user2", "adsasdasdas", 100, "reason", LocalDateTime.now()),
+        assertThrows(NonExistentFriendGroupException.class, () -> expensesRepository.addExpense( "user2", "adsasdasdas", 100, "reason", LocalDateTime.now()),
                 "addExpense() should throw on non existing group");
     }
 
