@@ -43,7 +43,7 @@ public class ExitChatCommand extends StandardCommand {
 
     public static CommandHelp help() {
         return new CommandHelp("exit-chat",
-                "leaves the chat room you are in. you can later rejoin by using the \"join-room\" " +
+                "leaves the chat room you are in. you can later rejoin by using the \"join-chat <chat-code>\" " +
                         "command and the room code",
                 new ParameterContainer());
     }

@@ -30,7 +30,7 @@ public class CreateChatCommand extends StandardCommand {
         try {
             String roomCode = chatRepository.createRoom();
             writer.println("Chat room created with code %s".formatted(roomCode));
-            writer.println("You can enter this chat room by typing \"join-room <room-code>\"");
+            writer.println("You can enter this chat room by typing \"join-chat <room-code>\"");
             writer.println("Send this code to your friends so that they can connect to your chat room!");
             return true;
         } catch (ChatException e) {
