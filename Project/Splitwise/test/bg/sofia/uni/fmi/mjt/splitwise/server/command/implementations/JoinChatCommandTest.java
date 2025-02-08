@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class JoinChatCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -49,7 +49,7 @@ public class JoinChatCommandTest {
 
         Command command =
                 new JoinChatCommand(authenticator, chatToken, new String[]{"test-code"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(chatToken, times(0))
@@ -66,7 +66,7 @@ public class JoinChatCommandTest {
 
         Command command =
                 new JoinChatCommand(authenticator, chatToken, new String[]{"test-code"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is in a chat");
 
         verify(chatToken, times(0))
@@ -87,7 +87,7 @@ public class JoinChatCommandTest {
         Command command =
                 new JoinChatCommand(authenticator, chatToken, new String[]{code});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated and not in chat");
 
         verify(chatToken, times(1))
@@ -108,7 +108,7 @@ public class JoinChatCommandTest {
         Command command =
                 new JoinChatCommand(authenticator, chatToken, new String[]{"asdasd"});
         assertThrows(ChatException.class, () -> chatToken.joinChat("asdasd"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should handle server errors");
     }
 
@@ -126,7 +126,7 @@ public class JoinChatCommandTest {
         Command command =
                 new JoinChatCommand(authenticator, chatToken, new String[]{"asdasd"});
         assertThrows(RuntimeException.class, () -> chatToken.joinChat("asdasd"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should handle server errors");
     }
 

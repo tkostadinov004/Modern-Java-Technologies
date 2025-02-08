@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class PayedGroupCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -53,7 +53,7 @@ public class PayedGroupCommandTest {
 
         Command command =
                 new PayedGroupCommand(authenticator, groupDebtsRepository, new String[]{"10", "user", "group", "reason"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(groupDebtsRepository, times(0))
@@ -69,7 +69,7 @@ public class PayedGroupCommandTest {
 
         Command command =
                 new PayedGroupCommand(authenticator, groupDebtsRepository, new String[]{"-jmb10", "user", "group", "reason"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when amount is invalid");
 
         verify(groupDebtsRepository, times(0))
@@ -91,7 +91,7 @@ public class PayedGroupCommandTest {
         Command command =
                 new PayedGroupCommand(authenticator, groupDebtsRepository, new String[]{"10", "user", "group", "reason"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(groupDebtsRepository, times(1))
@@ -112,7 +112,7 @@ public class PayedGroupCommandTest {
         Command command =
                 new PayedGroupCommand(authenticator, groupDebtsRepository, new String[]{"10", "user","group", "reason"});
         assertThrows(IllegalArgumentException.class, () -> groupDebtsRepository.lowerDebtBurden("user", "testuser", "group",10, "reason"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be handled if there are errors");
     }
 

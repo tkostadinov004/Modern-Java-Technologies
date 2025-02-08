@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AddFriendCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -48,7 +48,7 @@ public class AddFriendCommandTest {
 
         Command command =
                 new AddFriendCommand(authenticator, userFriendsRepository, new String[]{"user"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(userFriendsRepository, times(0))
@@ -67,7 +67,7 @@ public class AddFriendCommandTest {
         Command command =
                 new AddFriendCommand(authenticator, userFriendsRepository, new String[]{"user"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(userFriendsRepository, times(1))
@@ -88,7 +88,7 @@ public class AddFriendCommandTest {
         Command command =
                 new AddFriendCommand(authenticator, userFriendsRepository, new String[]{"user"});
         assertThrows(AlreadyFriendsException.class, () -> userFriendsRepository.makeFriends(authenticator.getAuthenticatedUser().username(), "user"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if 2 people are already friends");
     }
 

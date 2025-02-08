@@ -29,15 +29,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DefaultPersonalDebtsRepositoryTest {
-    private static final DependencyContainer dependencyContainer = mock();
-    private static final User user1 = new User("user1", "asd", "Test", "Test1");
-    private static final User user2 = new User("user2", "asd", "Test", "Test1");
-    private static final User user3 = new User("user3", "asd", "Test", "Test1");
-
+    private static final DependencyContainer  DEPENDENCY_CONTAINER = mock();
+    private static final User USER_1 = new User("user1", "asd", "Test", "Test1");
+    private static final User USER_2 = new User("user2", "asd", "Test", "Test1");
+    private static final User USER_3 = new User("user3", "asd", "Test", "Test1");
+    
     @BeforeAll
     public static void setUp() {
         NotificationsRepository notificationsRepository = mock();
-        when(dependencyContainer.get(NotificationsRepository.class))
+        when( DEPENDENCY_CONTAINER.get(NotificationsRepository.class))
                 .thenReturn(notificationsRepository);
 
         PersonalDebtsCsvProcessor csvProcessor = mock();
@@ -45,23 +45,23 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(PersonalDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         UserRepository userRepository = mock();
-        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(user1));
-        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(user2));
-        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(user3));
+        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(USER_1));
+        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(USER_2));
+        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(USER_3));
         when(userRepository.containsUser("user1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
-        when(dependencyContainer.get(UserRepository.class))
+        when( DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
     }
 
     @Test
     public void testGetDebtsOfThrowsOnInvalidUsername() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> personalDebtsRepository.getDebtsOf(null),
                 "getDebtsOf() should throw on null username");
@@ -73,7 +73,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testGetDebtsOfThrowsOnNonexistentUser() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(NonExistentUserException.class, () -> personalDebtsRepository.getDebtsOf( "asdasdasd"),
                 "getExpensesOf() should throw on non existing user");
@@ -81,12 +81,12 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testGetDebtsOfReturnsDebtsCorrectly() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
         personalDebtsRepository.increaseDebtBurden("user2", "user1", 500, "another test");
 
-        Set<PersonalDebt> expected = Set.of(new PersonalDebt(user1, user2, 100, "test reason"),
-                new PersonalDebt(user2, user1, 500, "another test"));
+        Set<PersonalDebt> expected = Set.of(new PersonalDebt(USER_1, USER_2, 100, "test reason"),
+                new PersonalDebt(USER_2, USER_1, 500, "another test"));
         Set<PersonalDebt> actual = personalDebtsRepository.getDebtsOf("user1");
 
         assertTrue(expected.size() == actual.size() && expected.containsAll(actual) && actual.containsAll(expected),
@@ -95,7 +95,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidDebtorUsername() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.lowerDebtBurden(null, "asd", 50, "asd"),
@@ -110,7 +110,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidRecipientUsername() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.lowerDebtBurden("asd", null , 50, "asd"),
@@ -125,7 +125,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNegativeAmount() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.lowerDebtBurden("asd", "asdd" , -1, "asd"),
@@ -134,7 +134,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnZeroAmount() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.lowerDebtBurden("asd", "asdd" , 0, "asd"),
@@ -143,7 +143,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidReason() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.lowerDebtBurden("asd", "asdd" , 50, null),
@@ -158,7 +158,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentDebtor() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(NonExistentUserException.class, () -> personalDebtsRepository.lowerDebtBurden( "asdasdasd", "user1", 50, "asdasd"),
                 "lowerDebtBurden() should throw on nonexisting debtor");
@@ -166,7 +166,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentRecipient() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(NonExistentUserException.class, () -> personalDebtsRepository.lowerDebtBurden( "user1", "asdasdasd", 50, "asdasd"),
                 "lowerDebtBurden() should throw on nonexisting recipient");
@@ -174,7 +174,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnEqualDebtorAndRecipient() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(IllegalArgumentException.class, () -> personalDebtsRepository.lowerDebtBurden( "user1", "user1", 50, "asdasd"),
                 "lowerDebtBurden() should throw when debtor and recipient are equal");
@@ -182,7 +182,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentDebt() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentDebtException.class, () -> personalDebtsRepository.lowerDebtBurden( "user1", "user2", 50, "asdasd"),
                 "lowerDebtBurden() should throw when debt doesn't exist");
@@ -195,10 +195,10 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(PersonalDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
         PersonalDebtDTO debtDTO = new PersonalDebtDTO("user1", "user2",100, "test reason");
         doAnswer((Answer<Void>) _ -> null)
@@ -209,7 +209,7 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .remove(debtDTO);
 
         Optional<PersonalDebt> debt = personalDebtsRepository.getDebtsOf("user1")
-                        .stream().filter(d -> d.recipient().equals(user2) && d.reason().equals("test reason"))
+                        .stream().filter(d -> d.recipient().equals(USER_2) && d.reason().equals("test reason"))
                         .findFirst();
         assertTrue(debt.isEmpty(),
                 "If a debt is completely paid off, it should be deleted from the repository.");
@@ -222,7 +222,7 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(PersonalDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         PersonalDebtDTO crudDTO = new PersonalDebtDTO("user1", "user2", 100, "test reason");
@@ -230,7 +230,7 @@ public class DefaultPersonalDebtsRepositoryTest {
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).modify(crudDTO, modifiedDTO);
 
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
 
         personalDebtsRepository.lowerDebtBurden("user1", "user2", 30, "test reason");
@@ -238,7 +238,7 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .modify(crudDTO, modifiedDTO);
 
         Optional<PersonalDebt> debt = personalDebtsRepository.getDebtsOf("user1")
-                        .stream().filter(d -> d.recipient().equals(user2) && d.reason().equals("test reason"))
+                        .stream().filter(d -> d.recipient().equals(USER_2) && d.reason().equals("test reason"))
                         .findFirst();
         assertTrue(debt.isPresent(),
                 "Even though its amount got lowered, the debt should still be present.");
@@ -249,10 +249,10 @@ public class DefaultPersonalDebtsRepositoryTest {
     @Test
     public void testLowerDebtBurdenSendsNotification() {
         NotificationsRepository notificationsRepository = mock();
-        when(dependencyContainer.get(NotificationsRepository.class))
+        when( DEPENDENCY_CONTAINER.get(NotificationsRepository.class))
                 .thenReturn(notificationsRepository);
 
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
 
         personalDebtsRepository.lowerDebtBurden("user1", "user2", 30, "test reason");
@@ -265,7 +265,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnInvalidDebtorUsername() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.increaseDebtBurden(null, "asd", 50, "asd"),
@@ -280,7 +280,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnInvalidRecipientUsername() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.increaseDebtBurden("asd", null , 50, "asd"),
@@ -295,7 +295,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNegativeAmount() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.increaseDebtBurden("asd", "asdd" , -1, "asd"),
@@ -304,7 +304,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnZeroAmount() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.increaseDebtBurden("asd", "asdd" , 0, "asd"),
@@ -313,7 +313,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void tesIncreaseDebtBurdenThrowsOnInvalidReason() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> personalDebtsRepository.increaseDebtBurden("asd", "asdd" , 50, null),
@@ -328,7 +328,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNonexistentDebtor() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(NonExistentUserException.class, () -> personalDebtsRepository.increaseDebtBurden( "asdasdasd", "user1", 50, "asdasd"),
                 "increaseDebtBurden() should throw on nonexisting debtor");
@@ -336,7 +336,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNonexistentRecipient() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(NonExistentUserException.class, () -> personalDebtsRepository.increaseDebtBurden( "user1", "asdasdasd", 50, "asdasd"),
                 "increaseDebtBurden() should throw on nonexisting recipient");
@@ -344,7 +344,7 @@ public class DefaultPersonalDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnEqualDebtorAndRecipient() {
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
 
         assertThrows(IllegalArgumentException.class, () -> personalDebtsRepository.increaseDebtBurden( "user1", "user1", 50, "asdasd"),
                 "increaseDebtBurden() should throw when debtor and recipient are equal");
@@ -357,10 +357,10 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(PersonalDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);
 
         personalDebtsRepository.increaseDebtBurden( "user1", "user2", 50, "test reason");
         verify(csvProcessor, times(0))
@@ -369,7 +369,7 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .writeToFile(any());
 
         assertTrue(personalDebtsRepository.getDebtsOf("user1")
-                .stream().anyMatch(d -> d.recipient().equals(user2) && d.amount() == 50 && d.reason().equals("test reason")),
+                .stream().anyMatch(d -> d.recipient().equals(USER_2) && d.amount() == 50 && d.reason().equals("test reason")),
                 "Debt should be added if it didn't exist before.");
     }
 
@@ -380,7 +380,7 @@ public class DefaultPersonalDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(PersonalDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(PersonalDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         PersonalDebtDTO crudDTO = new PersonalDebtDTO("user1", "user2", 100, "test reason");
@@ -388,14 +388,14 @@ public class DefaultPersonalDebtsRepositoryTest {
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).modify(crudDTO, modifiedDTO);
 
-        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository(dependencyContainer);;
+        PersonalDebtsRepository personalDebtsRepository = new DefaultPersonalDebtsRepository( DEPENDENCY_CONTAINER);;
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 100, "test reason");
         personalDebtsRepository.increaseDebtBurden("user1", "user2", 30, "test reason");
         verify(csvProcessor, times(1))
                 .modify(crudDTO, modifiedDTO);
 
         Optional<PersonalDebt> debt = personalDebtsRepository.getDebtsOf("user1")
-                .stream().filter(d -> d.recipient().equals(user2) && d.reason().equals("test reason"))
+                .stream().filter(d -> d.recipient().equals(USER_2) && d.reason().equals("test reason"))
                 .findFirst();
         assertTrue(debt.isPresent(),
                 "The debt should still be present.");

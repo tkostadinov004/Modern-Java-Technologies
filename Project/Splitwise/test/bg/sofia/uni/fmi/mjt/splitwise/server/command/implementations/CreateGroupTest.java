@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class CreateGroupTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -49,7 +49,7 @@ public class CreateGroupTest {
 
         Command command =
                 new CreateGroupCommand(authenticator, friendGroupRepository, new String[]{"user", "user1", "user2"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(friendGroupRepository, times(0))
@@ -68,7 +68,7 @@ public class CreateGroupTest {
         Command command =
                 new CreateGroupCommand(authenticator, friendGroupRepository, new String[]{"testGroup", "user1", "user2"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(friendGroupRepository, times(1))
@@ -89,7 +89,7 @@ public class CreateGroupTest {
         Command command =
                 new CreateGroupCommand(authenticator, friendGroupRepository, new String[]{"testGroup", "user1", "user2"});
         assertThrows(GroupAlreadyExistsException.class, () -> friendGroupRepository.createGroup("testGroup", Set.of("user1", "user2")));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if group already exists");
     }
 

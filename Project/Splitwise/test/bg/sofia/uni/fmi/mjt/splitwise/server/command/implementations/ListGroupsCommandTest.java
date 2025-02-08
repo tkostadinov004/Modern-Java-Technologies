@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ListGroupsCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -46,7 +46,7 @@ public class ListGroupsCommandTest {
 
         Command command =
                 new ListGroupsCommand(authenticator, friendGroupRepository, new String[0]);
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(friendGroupRepository, times(0))
@@ -67,7 +67,7 @@ public class ListGroupsCommandTest {
         Command command =
                 new ListGroupsCommand(authenticator, friendGroupRepository, new String[0]);
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(friendGroupRepository, times(1))
@@ -88,7 +88,7 @@ public class ListGroupsCommandTest {
         Command command =
                 new ListGroupsCommand(authenticator, friendGroupRepository, new String[0]);
         assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.getGroupsOf("testuser"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if group already exists");
     }
 

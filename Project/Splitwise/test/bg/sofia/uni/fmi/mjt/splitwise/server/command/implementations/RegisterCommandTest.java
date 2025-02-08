@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class RegisterCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -60,7 +60,7 @@ public class RegisterCommandTest {
 
         Command command =
                 new RegisterCommand(authenticator, userRepository, new String[]{"username", "pass", "fn", "ln"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is authenticated");
 
         verify(userRepository, times(0))
@@ -80,7 +80,7 @@ public class RegisterCommandTest {
         Command command =
                 new RegisterCommand(authenticator, userRepository, new String[]{"username", "pass", "fn", "ln"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(userRepository, times(1))
@@ -99,7 +99,7 @@ public class RegisterCommandTest {
         Command command =
                 new RegisterCommand(authenticator, userRepository, new String[]{"username", "pass", "fn", "ln"});
         assertThrows(IllegalArgumentException.class, () -> userRepository.registerUser("username", "pass", "fn", "ln"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there are any errors");
     }
 

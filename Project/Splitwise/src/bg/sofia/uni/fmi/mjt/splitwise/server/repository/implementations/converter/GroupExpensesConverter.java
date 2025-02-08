@@ -36,6 +36,9 @@ public class GroupExpensesConverter
         if (group.isEmpty()) {
             return null;
         }
+        if (!group.get().participants().contains(payer.get())) {
+            return null;
+        }
 
         return new GroupExpense(payer.get(), dto.amount(), dto.reason(), group.get(),
                 dto.timestamp());

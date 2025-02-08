@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ExportRecentPersonalExpensesCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -57,7 +57,7 @@ public class ExportRecentPersonalExpensesCommandTest {
 
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"10", "file"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(personalExpensesRepository, times(0))
@@ -78,7 +78,7 @@ public class ExportRecentPersonalExpensesCommandTest {
 
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"lhjkjh10", "file"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when amount is invalid");
 
         verify(personalExpensesRepository, times(0))
@@ -100,7 +100,7 @@ public class ExportRecentPersonalExpensesCommandTest {
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"10", "file"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(personalExpensesRepository, times(1))
@@ -125,7 +125,7 @@ public class ExportRecentPersonalExpensesCommandTest {
         Command command =
                 new ExportRecentPersonalExpensesCommand(authenticator, personalExpensesRepository, new String[]{"10", "file"});
         assertThrows(IOException.class, () -> personalExpensesRepository.exportRecent(authenticator.getAuthenticatedUser().username(), 10, new BufferedWriter(new StringWriter())));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there are output issues");
     }
 

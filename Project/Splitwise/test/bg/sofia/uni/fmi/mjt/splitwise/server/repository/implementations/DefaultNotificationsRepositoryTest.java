@@ -26,9 +26,9 @@ import static org.mockito.Mockito.when;
 
 public class DefaultNotificationsRepositoryTest {
     private static final DependencyContainer dependencyContainer = mock();
-    private static final User user1 = new User("user1", "asd", "Test", "Test1");
-    private static final User user2 = new User("user2", "asd", "Test", "Test1");
-    private static final User user3 = new User("user3", "asd", "Test", "Test1");
+    private static final User USER_1 = new User("user1", "asd", "Test", "Test1");
+    private static final User USER_2 = new User("user2", "asd", "Test", "Test1");
+    private static final User USER_3 = new User("user3", "asd", "Test", "Test1");
 
     @BeforeAll
     public static void setUp() {
@@ -41,9 +41,9 @@ public class DefaultNotificationsRepositoryTest {
                 .thenReturn(csvProcessor);
 
         UserRepository userRepository = mock();
-        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(user1));
-        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(user2));
-        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(user3));
+        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(USER_1));
+        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(USER_2));
+        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(USER_3));
         when(userRepository.containsUser("user1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
@@ -81,8 +81,8 @@ public class DefaultNotificationsRepositoryTest {
     @Test
     public void testGetFriendsReturnsCorrectly() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
-        Notification notification1 = new Notification(user1, "test content1", LocalDateTime.now(), NotificationType.GROUP);
-        Notification notification2 = new Notification(user1, "test content2", LocalDateTime.now(), NotificationType.PERSONAL);
+        Notification notification1 = new Notification(USER_1, "test content1", LocalDateTime.now(), NotificationType.GROUP);
+        Notification notification2 = new Notification(USER_1, "test content2", LocalDateTime.now(), NotificationType.PERSONAL);
         notificationsRepository.addNotificationForUser(notification1.receiver().username(), notification1.content(), notification1.timeSent(), notification1.type());
         notificationsRepository.addNotificationForUser(notification2.receiver().username(), notification2.content(), notification2.timeSent(), notification2.type());
 
@@ -152,7 +152,7 @@ public class DefaultNotificationsRepositoryTest {
     @Test
     public void testAddNotificationForUserAddsCorrectly() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
-        Notification notification = new Notification(user1, "content", LocalDateTime.now(), NotificationType.GROUP);
+        Notification notification = new Notification(USER_1, "content", LocalDateTime.now(), NotificationType.GROUP);
         notificationsRepository.addNotificationForUser(notification.receiver().username(), notification.content(), notification.timeSent(), notification.type());
 
         assertTrue(notificationsRepository
@@ -164,7 +164,7 @@ public class DefaultNotificationsRepositoryTest {
     @Test
     public void testAddNotificationForUserAddsCorrectlyWithoutGivenTime() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
-        Notification notification = new Notification(user1, "content", LocalDateTime.now(), NotificationType.GROUP);
+        Notification notification = new Notification(USER_1, "content", LocalDateTime.now(), NotificationType.GROUP);
         notificationsRepository.addNotificationForUser(notification.receiver().username(), notification.content(), notification.type());
 
         Optional<Notification> found = notificationsRepository
@@ -203,8 +203,8 @@ public class DefaultNotificationsRepositoryTest {
     @Test
     public void testRemoveAllNotificationsForUserCorrectly() {
         NotificationsRepository notificationsRepository = new DefaultNotificationsRepository(dependencyContainer);
-        Notification notification1 = new Notification(user1, "content", LocalDateTime.now(), NotificationType.GROUP);
-        Notification notification2 = new Notification(user1, "content1", LocalDateTime.now(), NotificationType.PERSONAL);
+        Notification notification1 = new Notification(USER_1, "content", LocalDateTime.now(), NotificationType.GROUP);
+        Notification notification2 = new Notification(USER_1, "content1", LocalDateTime.now(), NotificationType.PERSONAL);
         notificationsRepository.addNotificationForUser(notification1.receiver().username(), notification1.content(), notification1.timeSent(), notification1.type());
         notificationsRepository.addNotificationForUser(notification2.receiver().username(), notification2.content(), notification2.timeSent(), notification2.type());
 

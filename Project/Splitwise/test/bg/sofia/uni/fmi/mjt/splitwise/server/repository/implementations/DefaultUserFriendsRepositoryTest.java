@@ -24,7 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DefaultUserFriendsRepositoryTest {
-    private static final DependencyContainer dependencyContainer = mock();
+    private static final DependencyContainer DEPENDENCY_CONTAINER = mock();
 
     @BeforeAll
     public static void setUp() {
@@ -35,7 +35,7 @@ public class DefaultUserFriendsRepositoryTest {
                 .when(friendsCsvProcessor).writeToFile(new FriendshipRelationDTO("user1", "user2"));
         doAnswer((Answer<Void>) _ -> null)
                 .when(friendsCsvProcessor).writeToFile(new FriendshipRelationDTO("user1", "user3"));
-        when(dependencyContainer.get(UserFriendsCsvProcessor.class))
+        when(DEPENDENCY_CONTAINER.get(UserFriendsCsvProcessor.class))
                 .thenReturn(friendsCsvProcessor);
 
         User user1 = new User("user1", "asd", "Test", "Test1");
@@ -49,13 +49,13 @@ public class DefaultUserFriendsRepositoryTest {
         when(userRepository.containsUser("user1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
-        when(dependencyContainer.get(UserRepository.class))
+        when(DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
     }
 
     @Test
     public void testImportsFromCSVSuccessfully() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertTrue(friendsRepository.areFriends("user1", "user2"),
                 "Friendship relation should be imported from the database upon creation of the repository.");
@@ -65,7 +65,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testAreFriendsThrowsOnInvalidFirstUsername() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendsRepository.areFriends(null, "asdasd"),
                 "areFriends() should throw on null username");
@@ -77,7 +77,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testAreFriendsThrowsOnInvalidSecondUsername() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendsRepository.areFriends("asdasd", null),
                 "areFriends() should throw on null username");
@@ -89,7 +89,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testAreFriendsThrowsOnNonexistentFirstUser() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> friendsRepository.areFriends("aghsdhgasd", "user2"),
                 "areFriends() should throw on non existing first user");
@@ -97,7 +97,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testAreFriendsThrowsOnNonexistentSecondUser() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> friendsRepository.areFriends("user1", "asdasdasd"),
                 "areFriends() should throw on non existing second user");
@@ -105,7 +105,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testGetFriendsThrowsOnInvalidUsername() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendsRepository.getFriendsOf( null),
                 "getFriendsOf() should throw on null username");
@@ -117,7 +117,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testGetFriendsThrowsOnNonexistentUser() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> friendsRepository.getFriendsOf( "asdasdasd"),
                 "getFriendsOf() should throw on non existing second user");
@@ -125,14 +125,14 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testGetFriendsReturnsEmptySetIfUserHasNoFriends() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
         assertTrue(friendsRepository.getFriendsOf("user3").isEmpty(),
                 "getFriendsOf() should return an empty set if a user has no friends");
     }
 
     @Test
     public void testGetFriendsReturnsCorrectly() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
         Set<User> expected = Set.of(new User("user1", "asd", "Test", "Test1"));
         Set<User> actual = friendsRepository.getFriendsOf("user2");
 
@@ -143,7 +143,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsThrowsOnInvalidFirstUsername() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendsRepository.makeFriends(null, "asdasd"),
                 "makeFriends() should throw on null first username");
@@ -155,7 +155,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsThrowsOnInvalidSecondUsername() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendsRepository.makeFriends("asdasd", null),
                 "makeFriends() should throw on null second username");
@@ -167,7 +167,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsThrowsOnNonexistentFirstUser() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> friendsRepository.makeFriends("asdasdasd", "user2"),
                 "makeFriends() should throw on non existing first user");
@@ -175,7 +175,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsThrowsOnNonexistentSecondUser() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> friendsRepository.makeFriends("user2", "asdasdasd"),
                 "makeFriends() should throw on non existing second user");
@@ -183,7 +183,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsThrowsIfUserTriesToBefriendThemselves() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendsRepository.makeFriends("user1", "user1"),
                 "A user cannot befriend themselves.");
@@ -191,7 +191,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsThrowsIfUsersAreAlreadyFriends() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(AlreadyFriendsException.class, () -> friendsRepository.makeFriends("user1", "user2"),
                 "makeFriends() should throw if 2 users are already friends.");
@@ -201,7 +201,7 @@ public class DefaultUserFriendsRepositoryTest {
 
     @Test
     public void testMakeFriendsWorksCorrectly() {
-        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(dependencyContainer);
+        UserFriendsRepository friendsRepository = new DefaultUserFriendsRepository(DEPENDENCY_CONTAINER);
         friendsRepository.makeFriends("user1", "user3");
 
         assertTrue(friendsRepository.areFriends("user1", "user3"),

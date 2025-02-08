@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ExportRecentGroupExpensesCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -59,7 +59,7 @@ public class ExportRecentGroupExpensesCommandTest {
 
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "10", "file"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(groupExpensesRepository, times(0))
@@ -80,7 +80,7 @@ public class ExportRecentGroupExpensesCommandTest {
 
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "lhjkjh10", "file"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when amount is invalid");
 
         verify(groupExpensesRepository, times(0))
@@ -102,7 +102,7 @@ public class ExportRecentGroupExpensesCommandTest {
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "10", "file"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(groupExpensesRepository, times(1))
@@ -126,7 +126,7 @@ public class ExportRecentGroupExpensesCommandTest {
         Command command =
                 new ExportRecentGroupExpensesCommand(authenticator, groupExpensesRepository, new String[]{ "10", "file"});
         assertThrows(IOException.class, () -> groupExpensesRepository.exportRecent(authenticator.getAuthenticatedUser().username(), 10, new BufferedWriter(new StringWriter())));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there are output issues");
     }
 

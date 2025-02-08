@@ -33,47 +33,47 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DefaultAuthenticatorTest {
-    private static final DependencyContainer dependencyContainer = mock();
+    private static final DependencyContainer  DEPENDENCY_CONTAINER = mock();
     private static final Socket SOCKET = mock();
-    private static final User user1 = new User("user1", "asd", "Test", "Test1");
+    private static final User  USER_1 = new User(" USER_1", "asd", "Test", "Test1");
 
     @BeforeAll
     public static void setUp() {
         Logger logger = mock();
-        when(dependencyContainer.get(Logger.class))
+        when( DEPENDENCY_CONTAINER.get(Logger.class))
                 .thenReturn(logger);
 
         User user2 = new User("user2", "fgh", "Test", "Test1");
         User user3 = new User("user3", "hjk", "Test", "Test1");
 
         UserRepository userRepository = mock();
-        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(user1));
+        when(userRepository.getUserByUsername(" USER_1")).thenReturn(Optional.of( USER_1));
         when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(user2));
         when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(user3));
-        when(userRepository.containsUser("user1")).thenReturn(true);
+        when(userRepository.containsUser(" USER_1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
-        when(dependencyContainer.get(UserRepository.class))
+        when( DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
 
         PasswordHasher hasher = mock();
         when(hasher.hash("pass1")).thenReturn("asd");
         when(hasher.hash("pass2")).thenReturn("fgh");
         when(hasher.hash("pass3")).thenReturn("hjk");
-        when(dependencyContainer.get(PasswordHasher.class))
+        when( DEPENDENCY_CONTAINER.get(PasswordHasher.class))
                 .thenReturn(hasher);
     }
 
     @Test
     public void isAuthenticatedReturnsFalseIfUserIsNotAuthenticated() {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
         assertFalse(authenticator.isAuthenticated(),
                 "isAuthenticated() should return false if a user is not authenticated");
     }
 
     @Test
     public void testAuthenticateThrowsOnInvalidName() {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
 
         assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate(null, "pass"),
                 "authenticate() should throw on null username");
@@ -85,20 +85,20 @@ public class DefaultAuthenticatorTest {
 
     @Test
     public void testAuthenticateThrowsOnInvalidPassword() {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
 
-        assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate("user1", null),
+        assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate(" USER_1", null),
                 "authenticate() should throw on null password");
-        assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate("user1", ""),
+        assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate(" USER_1", ""),
                 "authenticate() should throw on empty password");
-        assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate("user1", "   "),
+        assertThrows(IllegalArgumentException.class, () -> authenticator.authenticate(" USER_1", "   "),
                 "authenticate() should throw on blank password");
     }
 
     @Test
     public void testAuthenticateThrowsIfUserIsAlreadyAuthenticated() throws AlreadyAuthenticatedException {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
-        authenticator.authenticate("user1", "pass1");
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
+        authenticator.authenticate(" USER_1", "pass1");
 
         assertThrows(AlreadyAuthenticatedException.class, () -> authenticator.authenticate("user2", "pass2"),
                 "authenticate() should throw on null password");
@@ -106,7 +106,7 @@ public class DefaultAuthenticatorTest {
 
     @Test
     public void testAuthenticateThrowsOnNonexistentUser() {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
 
         assertThrows(InvalidCredentialsException.class, () -> authenticator.authenticate("aghsdhgasd", "pass2"),
                 "authenticate() should throw on non existing user");
@@ -114,24 +114,24 @@ public class DefaultAuthenticatorTest {
 
     @Test
     public void testAuthenticateThrowsOnWrongPassword() {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
 
-        assertThrows(InvalidCredentialsException.class, () -> authenticator.authenticate("user1", "pass3"),
+        assertThrows(InvalidCredentialsException.class, () -> authenticator.authenticate(" USER_1", "pass3"),
                 "authenticate() should throw on wrong password");
     }
 
     @Test
     public void testAuthenticatesSuccessfully() throws AlreadyAuthenticatedException {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
-        authenticator.authenticate("user1", "pass1");
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
+        authenticator.authenticate(" USER_1", "pass1");
 
-        assertEquals(user1, authenticator.getAuthenticatedUser(),
+        assertEquals( USER_1, authenticator.getAuthenticatedUser(),
                 "User should be saved in the authentication token after authenticating");
     }
 
     @Test
     public void testLogoutThrowsWhenUserIsNotLoggedIn() {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
 
         assertThrows(NotAuthenticatedException.class, () -> authenticator.logout(),
                 "logout() should throw when a user is not authenticated");
@@ -139,8 +139,8 @@ public class DefaultAuthenticatorTest {
 
     @Test
     public void testLogsOutSuccessfully() throws AlreadyAuthenticatedException, NotAuthenticatedException {
-        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, SOCKET);
-        authenticator.authenticate("user1", "pass1");
+        Authenticator authenticator = new DefaultAuthenticator( DEPENDENCY_CONTAINER, SOCKET);
+        authenticator.authenticate(" USER_1", "pass1");
         authenticator.logout();
 
         assertEquals(null, authenticator.getAuthenticatedUser(),

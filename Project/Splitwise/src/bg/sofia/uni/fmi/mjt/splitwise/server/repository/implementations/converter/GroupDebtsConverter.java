@@ -35,8 +35,16 @@ public class GroupDebtsConverter
         if (recipient.isEmpty()) {
             return null;
         }
+        if (debtor.get().equals(recipient.get())) {
+            return null;
+        }
+
         Optional<FriendGroup> group = friendGroupRepository.getGroup(dto.groupName());
         if (group.isEmpty()) {
+            return null;
+        }
+        if (!group.get().participants().contains(debtor.get()) ||
+                !group.get().participants().contains(recipient.get())) {
             return null;
         }
         return new GroupDebt(debtor.get(), recipient.get(), group.get(), dto.amount(), dto.reason());

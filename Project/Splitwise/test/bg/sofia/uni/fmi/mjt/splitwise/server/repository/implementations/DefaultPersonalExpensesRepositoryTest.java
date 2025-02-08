@@ -38,20 +38,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DefaultPersonalExpensesRepositoryTest {
-    private static final DependencyContainer dependencyContainer = mock();
-    private static final User user1 = new User("user1", "asd", "Test", "Test1");
-    private static final User user2 = new User("user2", "asd", "Test", "Test1");
-    private static final User user3 = new User("user3", "asd", "Test", "Test1");
-    private static final User user4 = new User("user4", "asd", "Test", "Test1");
+    private static final DependencyContainer DEPENDENCY_CONTAINER = mock();
+    private static final User USER_1 = new User("user1", "asd", "Test", "Test1");
+    private static final User USER_2 = new User("user2", "asd", "Test", "Test1");
+    private static final User USER_3 = new User("user3", "asd", "Test", "Test1");
+    private static final User USER_4 = new User("user4", "asd", "Test", "Test1");
 
     @BeforeAll
     public static void setUp() {
         Logger logger = mock();
-        when(dependencyContainer.get(Logger.class))
+        when(DEPENDENCY_CONTAINER.get(Logger.class))
                 .thenReturn(logger);
 
         NotificationsRepository notificationsRepository = mock();
-        when(dependencyContainer.get(NotificationsRepository.class))
+        when(DEPENDENCY_CONTAINER.get(NotificationsRepository.class))
                 .thenReturn(notificationsRepository);
 
         PersonalExpensesCsvProcessor csvProcessor = mock();
@@ -59,59 +59,59 @@ public class DefaultPersonalExpensesRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(PersonalExpensesCsvProcessor.class))
+        when(DEPENDENCY_CONTAINER.get(PersonalExpensesCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         UserRepository userRepository = mock();
-        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(user1));
-        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(user2));
-        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(user3));
-        when(userRepository.getUserByUsername("user4")).thenReturn(Optional.of(user4));
+        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(USER_1));
+        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(USER_2));
+        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(USER_3));
+        when(userRepository.getUserByUsername("user4")).thenReturn(Optional.of(USER_4));
         when(userRepository.containsUser("user1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
         when(userRepository.containsUser("user4")).thenReturn(true);
-        when(dependencyContainer.get(UserRepository.class))
+        when(DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
 
         PersonalDebtsRepository personalDebtsRepository = mock();
-        when(dependencyContainer.get(PersonalDebtsRepository.class))
+        when(DEPENDENCY_CONTAINER.get(PersonalDebtsRepository.class))
                 .thenReturn(personalDebtsRepository);
     }
 
     @Test
     public void testGetExpensesOfThrowsOnInvalidUsername() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.getExpensesOf(null),
-                "getExpensesOf() should throw on null username");
+                "getExpensesOf() should throw on null USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.getExpensesOf(""),
-                "getExpensesOf() should throw on empty username");
+                "getExpensesOf() should throw on empty USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.getExpensesOf("   "),
-                "getExpensesOf() should throw on blank username");
+                "getExpensesOf() should throw on blank USER_name");
     }
 
     @Test
     public void testGetExpensesOfThrowsOnNonexistentUser() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> expensesRepository.getExpensesOf( "asdasdasd"),
-                "getExpensesOf() should throw on non existing user");
+                "getExpensesOf() should throw on non existing USER_");
     }
 
     @Test
     public void testGetExpensesOfReturnsEmptySetIfUserHasNoExpenses() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertTrue(expensesRepository.getExpensesOf("user3").isEmpty(),
-                "getExpensesOf() should return an empty set if a user has no expenses");
+                "getExpensesOf() should return an empty set if a USER_ has no expenses");
     }
 
     @Test
     public void testGetExpensesOfReturnsExpensesCorrectly() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
-        PersonalExpense expense1 = new PersonalExpense(user1, user2, 100, "test reason", LocalDateTime.now());
-        PersonalExpense expense2 = new PersonalExpense(user1, user3, 200, "test reason1", LocalDateTime.now());
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
+        PersonalExpense expense1 = new PersonalExpense(USER_1, USER_2, 100, "test reason", LocalDateTime.now());
+        PersonalExpense expense2 = new PersonalExpense(USER_1, USER_3, 200, "test reason1", LocalDateTime.now());
 
         expensesRepository.addExpense(expense1.payer().username(), expense1.debtor().username(), expense1.amount(), expense1.reason(), expense1.timestamp());
         expensesRepository.addExpense(expense2.payer().username(), expense2.debtor().username(), expense2.amount(), expense2.reason(), expense2.timestamp());
@@ -120,36 +120,36 @@ public class DefaultPersonalExpensesRepositoryTest {
 
         assertTrue(expected.size() == actual.size() &&
                         expected.containsAll(actual),
-                "getExpensesOf() should return all personal expenses a user made.");
+                "getExpensesOf() should return all personal expenses a USER_ made.");
     }
 
     @Test
     public void testAddExpenseThrowsOnInvalidPayerUsername() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense(null, "user2", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on null payer username");
+                "addExpense() should throw on null payer USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("", "user2", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on empty payer username");
+                "addExpense() should throw on empty payer USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("   ", "user2", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on blank payer username");
+                "addExpense() should throw on blank payer USER_name");
     }
 
     @Test
     public void testAddExpenseThrowsOnInvalidDebtorUsername() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense( "user2",null, 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on null debtor username");
+                "addExpense() should throw on null debtor USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("user2", "", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on empty debtor username");
+                "addExpense() should throw on empty debtor USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense( "user2", "   ",100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on blank debtor username");
+                "addExpense() should throw on blank debtor USER_name");
     }
 
     @Test
     public void testAddExpenseThrowsOnNegativeAmount() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("user1", "user2", -6, "reason", LocalDateTime.now()),
                 "addExpense() should throw when amount is negative");
@@ -157,7 +157,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testAddExpenseThrowsOnZeroAmount() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("user1", "user2", 0, "reason", LocalDateTime.now()),
                 "addExpense() should throw when amount is zero");
@@ -165,7 +165,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testAddExpenseThrowsOnInvalidReason() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense( "user2","user1", 100, null, LocalDateTime.now()),
                 "addExpense() should throw on null reason");
@@ -177,7 +177,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testAddExpenseThrowsOnNullTimestamp() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("user1", "user2", 22, "reason", null),
                 "addExpense() should throw on null timestamp");
@@ -185,7 +185,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testAddExpenseOfThrowsOnNonexistentPayer() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> expensesRepository.addExpense( "asdasdasd", "user2", 100, "reason", LocalDateTime.now()),
                 "addExpense() should throw on non existing payer");
@@ -193,7 +193,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testAddExpenseOfThrowsOnNonexistentDebtor() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> expensesRepository.addExpense( "user2", "adsasdasdas", 100, "reason", LocalDateTime.now()),
                 "addExpense() should throw on non existing debtor");
@@ -201,19 +201,19 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testExportRecentThrowsOnInvalidUsername() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( null,50, new BufferedWriter(new StringWriter())),
-                "exportRecent() should throw on null username");
+                "exportRecent() should throw on null USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent("", 50,   new BufferedWriter(new StringWriter())),
-                "exportRecent() should throw on empty username");
+                "exportRecent() should throw on empty USER_name");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "   ", 50,  new BufferedWriter(new StringWriter())),
-                "exportRecent() should throw on blank username");
+                "exportRecent() should throw on blank USER_name");
     }
 
     @Test
     public void testExportRecentThrowsOnNegativeCount() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "user1",-1, new BufferedWriter(new StringWriter())),
                 "exportRecent() should throw on negative count");
@@ -221,7 +221,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testExportRecentThrowsOnZeroCount() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "user1",0, new BufferedWriter(new StringWriter())),
                 "exportRecent() should throw on negative count");
@@ -229,7 +229,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testExportRecentThrowsOnNullWriter() {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "user1",50, null),
                 "exportRecent() should throw on null writer");
@@ -237,7 +237,7 @@ public class DefaultPersonalExpensesRepositoryTest {
 
     @Test
     public void testExportRecentExportsCorrectly() throws IOException {
-        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(dependencyContainer);
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
         LocalDateTime now = LocalDateTime.now();
         expensesRepository.addExpense("user1", "user2", 100, "bananas", now.minusDays(10));
         expensesRepository.addExpense("user1", "user2", 100, "bananas", now.minusDays(20));
@@ -248,8 +248,8 @@ public class DefaultPersonalExpensesRepositoryTest {
 
         expensesRepository.exportRecent("user1", 2, bufferedWriter);
 
-        String expected = "%s: 50.0 [another cost] with %s".formatted(now, user3) + System.lineSeparator() +
-                        "%s: 100.0 [bananas] with %s".formatted(now.minusDays(10), user2) + System.lineSeparator();
+        String expected = "%s: 50.0 [another cost] with %s".formatted(now, USER_3) + System.lineSeparator() +
+                        "%s: 100.0 [bananas] with %s".formatted(now.minusDays(10), USER_2) + System.lineSeparator();
 
         assertEquals(expected, stringWriter.toString(),
                 "Expenses should be sorted in descending order by timestamp");

@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class PayedCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -56,7 +56,7 @@ public class PayedCommandTest {
 
         Command command =
                 new PayedCommand(authenticator, personalDebtsRepository, new String[]{"10", "user", "reason"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(personalDebtsRepository, times(0))
@@ -72,7 +72,7 @@ public class PayedCommandTest {
 
         Command command =
                 new PayedCommand(authenticator, personalDebtsRepository, new String[]{"-1asdasd0", "user", "reason"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when amount is invalid");
 
         verify(personalDebtsRepository, times(0))
@@ -94,7 +94,7 @@ public class PayedCommandTest {
         Command command =
                 new PayedCommand(authenticator, personalDebtsRepository, new String[]{"10", "user", "reason"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(personalDebtsRepository, times(1))
@@ -115,7 +115,7 @@ public class PayedCommandTest {
         Command command =
                 new PayedCommand(authenticator, personalDebtsRepository, new String[]{"10", "user", "reason"});
         assertThrows(IllegalArgumentException.class, () -> personalDebtsRepository.lowerDebtBurden("user", "testuser", 10, "reason"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be handled if there are errors");
     }
 

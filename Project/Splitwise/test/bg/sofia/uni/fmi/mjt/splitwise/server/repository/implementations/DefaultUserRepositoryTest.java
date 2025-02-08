@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DefaultUserRepositoryTest {
-    private static final DependencyContainer dependencyContainer = mock();
+    private static final DependencyContainer DEPENDENCY_CONTAINER = mock();
 
     @BeforeAll
     public static void setUp() {
@@ -34,13 +34,13 @@ public class DefaultUserRepositoryTest {
         when(csvProcessor.readAll())
                 .thenReturn(Set.of(user));
         doAnswer((Answer<Void>) _ -> null).when(csvProcessor).writeToFile(user);
-        when(dependencyContainer.get(UserCsvProcessor.class))
+        when(DEPENDENCY_CONTAINER.get(UserCsvProcessor.class))
                 .thenReturn(csvProcessor);
     }
 
     @Test
     public void testImportsFromCSVSuccessfully() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
         Set<User> actual = userRepository.getAllUsers();
         Set<User> expected = Set.of(new User("user1", "asd", "Test", "Test1"));
 
@@ -50,7 +50,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testContainsThrowsOnInvalidName() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.containsUser(null),
                 "containsUser() should throw on null username");
@@ -62,7 +62,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testContainsReturnTrueIfUserIsPresent() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertTrue(userRepository.containsUser("user1"),
                 "User should be present in the repository.");
@@ -70,7 +70,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testContainsReturnsFalseIfUserIsNotPresent() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertFalse(userRepository.containsUser("user657tj"),
                 "User should not be present in the repository.");
@@ -78,7 +78,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testGetUserThrowsOnInvalidName() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.getUserByUsername(null),
                 "getUserByUsername() should throw on null username");
@@ -90,7 +90,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testGetUserCorrectly() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
         User expected = new User("user1", "asd", "Test", "Test1");
         Optional<User> actual = userRepository.getUserByUsername(expected.username());
 
@@ -101,7 +101,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testGetSocketThrowsOnInvalidName() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.getSocketByUsername(null),
                 "getUserByUsername() should throw on null username");
@@ -113,7 +113,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testGetSocketReturnsEmptyOnNonexistentUser() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
         Optional<Socket> result = userRepository.getSocketByUsername("example");
         assertTrue(result.isEmpty(),
                 "No socket should be returned when user is not present in the repository.");
@@ -121,7 +121,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testGetSocketReturnsSocketCorrectly() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
         Socket socket = mock();
         when(socket.getInetAddress())
                 .thenReturn(new InetSocketAddress("testhost", 12345).getAddress());
@@ -135,7 +135,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testBindSocketThrowsOnInvalidName() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
         Socket socket = mock();
         when(socket.getInetAddress())
                 .thenReturn(new InetSocketAddress("testhost", 12345).getAddress());
@@ -150,7 +150,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testBindSocketThrowsOnNonexistentUser() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
         Socket socket = mock();
         when(socket.getInetAddress())
                 .thenReturn(new InetSocketAddress("testhost", 12345).getAddress());
@@ -161,7 +161,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testBindSocketThrowsOnNullSocket() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.bindSocketToUser("user1", null),
                 "bindSocketToUser() should throw on null socket");
@@ -169,7 +169,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testRegisterUserThrowsOnInvalidUsername() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.registerUser(null, "pass", "name", "name"),
                 "registerUser() should throw on null username");
@@ -181,7 +181,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testRegisterUserThrowsOnInvalidPassword() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.registerUser("user", null, "name", "name"),
                 "registerUser() should throw on null password");
@@ -193,7 +193,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testRegisterUserThrowsOnInvalidFirstName() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.registerUser("user", "pass", null, "name"),
                 "registerUser() should throw on null first name");
@@ -205,7 +205,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testRegisterUserThrowsOnInvalidLastName() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> userRepository.registerUser("user", "pass", "name", null),
                 "registerUser() should throw on null last name");
@@ -217,7 +217,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testRegisterUserThrowsOnAlreadyExistingUser() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(AlreadyRegisteredException.class, () -> userRepository.registerUser("user1", "pass", "name", "name"),
                 "registerUser() should throw when trying to register a user with username that is already present in the repository");
@@ -225,7 +225,7 @@ public class DefaultUserRepositoryTest {
 
     @Test
     public void testRegisterUserAddsUserCorrectly() {
-        UserRepository userRepository = new DefaultUserRepository(dependencyContainer);
+        UserRepository userRepository = new DefaultUserRepository(DEPENDENCY_CONTAINER);
 
         userRepository.registerUser("user2", "pass", "name", "name");
         assertTrue(userRepository.containsUser("user2"),

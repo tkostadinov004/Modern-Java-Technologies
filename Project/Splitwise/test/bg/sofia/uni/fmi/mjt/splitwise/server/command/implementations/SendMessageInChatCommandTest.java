@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SendMessageInChatCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -58,7 +58,7 @@ public class SendMessageInChatCommandTest {
 
         Command command =
                 new SendMessageInChatCommand(authenticator, chatToken, chatRepository, new String[]{"message"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(chatRepository, times(0))
@@ -80,7 +80,7 @@ public class SendMessageInChatCommandTest {
 
         Command command =
                 new SendMessageInChatCommand(authenticator, chatToken, chatRepository, new String[]{"message"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not in a chat");
 
         verify(chatRepository, times(0))
@@ -107,7 +107,7 @@ public class SendMessageInChatCommandTest {
         Command command =
                 new SendMessageInChatCommand(authenticator, chatToken, chatRepository, new String[]{"message"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated and in chat");
 
         verify(chatRepository, times(1))
@@ -134,7 +134,7 @@ public class SendMessageInChatCommandTest {
         Command command =
                 new SendMessageInChatCommand(authenticator, chatToken, chatRepository, new String[]{"asdasd"});
         assertThrows(IllegalArgumentException.class, () -> chatRepository.sendMessage("asdasd", "asdasd", "message"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should handle errors");
     }
 

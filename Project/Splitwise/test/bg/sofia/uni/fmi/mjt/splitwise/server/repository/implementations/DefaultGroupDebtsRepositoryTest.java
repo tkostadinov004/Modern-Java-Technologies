@@ -33,17 +33,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DefaultGroupDebtsRepositoryTest {
-    private static final DependencyContainer dependencyContainer = mock();
-    private static final User user1 = new User("user1", "asd", "Test", "Test1");
-    private static final User user2 = new User("user2", "asd", "Test", "Test1");
-    private static final User user3 = new User("user3", "asd", "Test", "Test1");
-    private static final User user4 = new User("user4", "asd", "Test", "Test1");
-    private static final FriendGroup group = new FriendGroup("testGroup", Set.of(user1, user2, user3));
+    private static final DependencyContainer  DEPENDENCY_CONTAINER = mock();
+    private static final User USER_1 = new User("user1", "asd", "Test", "Test1");
+    private static final User USER_2 = new User("user2", "asd", "Test", "Test1");
+    private static final User USER_3 = new User("user3", "asd", "Test", "Test1");
+    private static final User USER_4 = new User("user4", "asd", "Test", "Test1");
+    private static final FriendGroup GROUP = new FriendGroup("testGroup", Set.of(USER_1, USER_2, USER_3));
 
     @BeforeAll
     public static void setUp() {
         NotificationsRepository notificationsRepository = mock();
-        when(dependencyContainer.get(NotificationsRepository.class))
+        when( DEPENDENCY_CONTAINER.get(NotificationsRepository.class))
                 .thenReturn(notificationsRepository);
 
         GroupDebtsCsvProcessor csvProcessor = mock();
@@ -51,37 +51,37 @@ public class DefaultGroupDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(GroupDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         UserRepository userRepository = mock();
-        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(user1));
-        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(user2));
-        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(user3));
-        when(userRepository.getUserByUsername("user4")).thenReturn(Optional.of(user4));
+        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(USER_1));
+        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(USER_2));
+        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(USER_3));
+        when(userRepository.getUserByUsername("user4")).thenReturn(Optional.of(USER_4));
         when(userRepository.containsUser("user1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
         when(userRepository.containsUser("user4")).thenReturn(true);
-        when(dependencyContainer.get(UserRepository.class))
+        when( DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
         
         FriendGroupRepository friendGroupRepository = mock();
         when(friendGroupRepository.getGroup("testGroup"))
-                .thenReturn(Optional.of(group));
+                .thenReturn(Optional.of(GROUP));
         when(friendGroupRepository.getGroupsOf("user1"))
-                .thenReturn(Set.of(group));
+                .thenReturn(Set.of(GROUP));
         when(friendGroupRepository.getGroupsOf("user2"))
-                .thenReturn(Set.of(group));
+                .thenReturn(Set.of(GROUP));
         when(friendGroupRepository.getGroupsOf("user3"))
-                .thenReturn(Set.of(group));
-        when(dependencyContainer.get(FriendGroupRepository.class))
+                .thenReturn(Set.of(GROUP));
+        when( DEPENDENCY_CONTAINER.get(FriendGroupRepository.class))
                 .thenReturn(friendGroupRepository);
     }
 
     @Test
     public void testGetDebtsOfThrowsOnInvalidUsername() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> groupDebtsRepository.getDebtsOf(null),
                 "getDebtsOf() should throw on null username");
@@ -93,7 +93,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testGetDebtsOfThrowsOnNonexistentUser() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> groupDebtsRepository.getDebtsOf( "asdasdasd"),
                 "getExpensesOf() should throw on non existing user");
@@ -101,23 +101,23 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testGetDebtsOfReturnsDebtsCorrectly() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup", 100, "test reason");
         groupDebtsRepository.increaseDebtBurden("user2", "user1", "testGroup",500, "another test");
 
-        Set<GroupDebt> expected = Set.of(new GroupDebt(user1, user2, group,100, "test reason"),
-                new GroupDebt(user2, user1, group,500, "another test"));
+        Set<GroupDebt> expected = Set.of(new GroupDebt(USER_1, USER_2, GROUP,100, "test reason"),
+                new GroupDebt(USER_2, USER_1, GROUP,500, "another test"));
         Map<FriendGroup, Set<GroupDebt>> actual = groupDebtsRepository.getDebtsOf("user1");
 
         assertEquals(1, actual.size(), "Only 1 group should be present.");
-        assertTrue(expected.size() == actual.get(group).size() &&
-                expected.containsAll(actual.get(group)),
+        assertTrue(expected.size() == actual.get(GROUP).size() &&
+                expected.containsAll(actual.get(GROUP)),
                 "getDebtsOf() should return all personal debts in a given group in which the user is a debtor or a recipient.");
     }
 
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidDebtorUsername() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.lowerDebtBurden(null, "asd", "testGroup",50, "asd"),
@@ -132,7 +132,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidRecipientUsername() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.lowerDebtBurden("asd", null , "testGroup",50, "asd"),
@@ -147,7 +147,7 @@ public class DefaultGroupDebtsRepositoryTest {
     
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidGroupName() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.lowerDebtBurden("user1", "user2" , null,50, "asd"),
@@ -162,7 +162,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNegativeAmount() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.lowerDebtBurden("asd", "asdd" , "testGroup", -1, "asd"),
@@ -171,7 +171,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnZeroAmount() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.lowerDebtBurden("asd", "asdd" , "testGroup", 0, "asd"),
@@ -180,7 +180,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnInvalidReason() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.lowerDebtBurden("asd", "asdd" , "testGroup", 50, null),
@@ -195,7 +195,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentDebtor() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> groupDebtsRepository.lowerDebtBurden( "asdasdasd", "user1", "testGroup", 50, "asdasd"),
                 "lowerDebtBurden() should throw on nonexisting debtor");
@@ -203,7 +203,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentRecipient() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> groupDebtsRepository.lowerDebtBurden( "user1", "asdasdasd", "testGroup", 50, "asdasd"),
                 "lowerDebtBurden() should throw on nonexisting recipient");
@@ -211,7 +211,7 @@ public class DefaultGroupDebtsRepositoryTest {
     
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentGroup() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentFriendGroupException.class, () -> groupDebtsRepository.lowerDebtBurden( "user1", "user2", "asdasdasdasd", 50, "asdasd"),
                 "lowerDebtBurden() should throw on nonexisting group");
@@ -219,7 +219,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnEqualDebtorAndRecipient() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> groupDebtsRepository.lowerDebtBurden( "user1", "user1", "testGroup", 50, "asdasd"),
                 "lowerDebtBurden() should throw when debtor and recipient are equal");
@@ -227,7 +227,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testLowerDebtBurdenThrowsOnNonexistentDebt() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentDebtException.class, () -> groupDebtsRepository.lowerDebtBurden( "user1", "user2", "testGroup", 50, "asdasd"),
                 "lowerDebtBurden() should throw when debt doesn't exist");
@@ -240,10 +240,10 @@ public class DefaultGroupDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(GroupDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",100, "test reason");
         GroupDebtDTO debtDTO = new GroupDebtDTO("user1", "user2", "testGroup",100, "test reason");
         doAnswer((Answer<Void>) _ -> null)
@@ -255,12 +255,12 @@ public class DefaultGroupDebtsRepositoryTest {
                 .remove(debtDTO);
 
         Map<FriendGroup, Set<GroupDebt>> debtsMap = groupDebtsRepository.getDebtsOf("user1");
-        assertTrue(debtsMap.containsKey(group),
+        assertTrue(debtsMap.containsKey(GROUP),
                 "Even though its amount got lowered, the debt should still be present.");
 
         Optional<GroupDebt> debt = debtsMap
-                .get(group)
-                .stream().filter(d -> d.recipient().equals(user2) && d.group().equals(group) && d.reason().equals("test reason"))
+                .get(GROUP)
+                .stream().filter(d -> d.recipient().equals(USER_2) && d.group().equals(GROUP) && d.reason().equals("test reason"))
                 .findFirst();
         assertTrue(debt.isEmpty(),
                 "If a debt is completely paid off, it should be deleted from the repository.");
@@ -273,14 +273,14 @@ public class DefaultGroupDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(GroupDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
         GroupDebtDTO crudDTO = new GroupDebtDTO("user1", "user2", "testGroup",100, "test reason");
         GroupDebtDTO modifiedDTO = new GroupDebtDTO("user1", "user2", "testGroup",70, "test reason");
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).modify(crudDTO, modifiedDTO);
 
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",100, "test reason");
 
         groupDebtsRepository.lowerDebtBurden("user1", "user2", "testGroup",30, "test reason");
@@ -289,12 +289,12 @@ public class DefaultGroupDebtsRepositoryTest {
                 .modify(crudDTO, modifiedDTO);
 
         Map<FriendGroup, Set<GroupDebt>> debtsMap = groupDebtsRepository.getDebtsOf("user1");
-        assertTrue(debtsMap.containsKey(group),
+        assertTrue(debtsMap.containsKey(GROUP),
                 "Even though its amount got lowered, the debt should still be present.");
 
         Optional<GroupDebt> debt = groupDebtsRepository.getDebtsOf("user1")
-                .get(group)
-                .stream().filter(d -> d.recipient().equals(user2) && d.group().equals(group) && d.reason().equals("test reason"))
+                .get(GROUP)
+                .stream().filter(d -> d.recipient().equals(USER_2) && d.group().equals(GROUP) && d.reason().equals("test reason"))
                 .findFirst();
         assertTrue(debt.isPresent(),
                 "Even though its amount got lowered, the debt should still be present.");
@@ -305,10 +305,10 @@ public class DefaultGroupDebtsRepositoryTest {
     @Test
     public void testLowerDebtBurdenSendsNotification() {
         NotificationsRepository notificationsRepository = mock();
-        when(dependencyContainer.get(NotificationsRepository.class))
+        when( DEPENDENCY_CONTAINER.get(NotificationsRepository.class))
                 .thenReturn(notificationsRepository);
 
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",100, "test reason");
 
         groupDebtsRepository.lowerDebtBurden("user1", "user2", "testGroup",30, "test reason");
@@ -321,7 +321,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnInvalidDebtorUsername() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.increaseDebtBurden(null, "asd", "testGroup",50, "asd"),
@@ -336,7 +336,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnInvalidRecipientUsername() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.increaseDebtBurden("asd", null , "testGroup",50, "asd"),
@@ -351,7 +351,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnInvalidGroupName() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.increaseDebtBurden("user1", "user2" , null,50, "asd"),
@@ -366,7 +366,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNegativeAmount() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.increaseDebtBurden("asd", "asdd" , "testGroup",-1, "asd"),
@@ -375,7 +375,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnZeroAmount() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.increaseDebtBurden("asd", "asdd" , "testGroup",0, "asd"),
@@ -384,7 +384,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void tesIncreaseDebtBurdenThrowsOnInvalidReason() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class,
                 () -> groupDebtsRepository.increaseDebtBurden("asd", "asdd" ,"testGroup", 50, null),
@@ -399,7 +399,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNonexistentDebtor() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> groupDebtsRepository.increaseDebtBurden( "asdasdasd", "user1", "testGroup",50, "asdasd"),
                 "increaseDebtBurden() should throw on nonexisting debtor");
@@ -407,7 +407,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNonexistentRecipient() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> groupDebtsRepository.increaseDebtBurden( "user1", "asdasdasd","testGroup", 50, "asdasd"),
                 "increaseDebtBurden() should throw on nonexisting recipient");
@@ -415,7 +415,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnNonexistentGroup() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentFriendGroupException.class, () -> groupDebtsRepository.increaseDebtBurden( "user1", "user2","fdgdfg", 50, "asdasd"),
                 "increaseDebtBurden() should throw on nonexisting group");
@@ -423,7 +423,7 @@ public class DefaultGroupDebtsRepositoryTest {
 
     @Test
     public void testIncreaseDebtBurdenThrowsOnEqualDebtorAndRecipient() {
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> groupDebtsRepository.increaseDebtBurden( "user1", "user1", "testGroup",50, "asdasd"),
                 "increaseDebtBurden() should throw when debtor and recipient are equal");
@@ -436,10 +436,10 @@ public class DefaultGroupDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(GroupDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
         groupDebtsRepository.increaseDebtBurden( "user1", "user2", "testGroup",50, "test reason");
         verify(csvProcessor, times(0))
                 .modify(any(), any());
@@ -447,13 +447,13 @@ public class DefaultGroupDebtsRepositoryTest {
                 .writeToFile(any());
 
         Map<FriendGroup, Set<GroupDebt>> debtsMap = groupDebtsRepository.getDebtsOf("user1");
-        assertTrue(debtsMap.containsKey(group),
+        assertTrue(debtsMap.containsKey(GROUP),
                 "Debt should be added if it didn't exist before.");
         assertTrue(groupDebtsRepository
                         .getDebtsOf("user1")
-                        .get(group)
+                        .get(GROUP)
                         .stream()
-                        .anyMatch(d -> d.recipient().equals(user2) && d.group().equals(group) && d.amount() == 50 && d.reason().equals("test reason")),
+                        .anyMatch(d -> d.recipient().equals(USER_2) && d.group().equals(GROUP) && d.amount() == 50 && d.reason().equals("test reason")),
                 "Debt should be added if it didn't exist before.");
     }
 
@@ -464,7 +464,7 @@ public class DefaultGroupDebtsRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(GroupDebtsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(GroupDebtsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         GroupDebtDTO crudDTO = new GroupDebtDTO("user1", "user2", "testGroup",100, "test reason");
@@ -472,7 +472,7 @@ public class DefaultGroupDebtsRepositoryTest {
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).modify(crudDTO, modifiedDTO);
 
-        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository(dependencyContainer);
+        GroupDebtsRepository groupDebtsRepository = new DefaultGroupDebtsRepository( DEPENDENCY_CONTAINER);
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup", 100, "test reason");
         groupDebtsRepository.increaseDebtBurden("user1", "user2", "testGroup",30, "test reason");
         verify(csvProcessor, times(1))
@@ -480,9 +480,9 @@ public class DefaultGroupDebtsRepositoryTest {
 
         Optional<GroupDebt> debt = groupDebtsRepository
                 .getDebtsOf("user1")
-                .get(group)
+                .get(GROUP)
                 .stream()
-                .filter(d -> d.recipient().equals(user2) && d.group().equals(group) && d.reason().equals("test reason"))
+                .filter(d -> d.recipient().equals(USER_2) && d.group().equals(GROUP) && d.reason().equals("test reason"))
                 .findFirst();
         assertTrue(debt.isPresent(),
                 "The debt should still be present.");

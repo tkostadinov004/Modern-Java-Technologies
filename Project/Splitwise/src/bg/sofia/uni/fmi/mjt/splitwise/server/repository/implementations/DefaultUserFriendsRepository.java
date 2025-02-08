@@ -55,7 +55,9 @@ public class DefaultUserFriendsRepository implements UserFriendsRepository {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(secondUsername));
         }
 
-        return friendMap.containsKey(first.get()) && friendMap.get(first.get()).contains(second.get());
+        synchronized (friendMap) {
+            return friendMap.containsKey(first.get()) && friendMap.get(first.get()).contains(second.get());
+        }
     }
 
     @Override

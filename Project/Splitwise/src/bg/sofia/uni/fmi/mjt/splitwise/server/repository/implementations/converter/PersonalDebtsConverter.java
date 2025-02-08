@@ -28,6 +28,9 @@ public class PersonalDebtsConverter
         if (recipient.isEmpty()) {
             return null;
         }
+        if (debtor.get().equals(recipient.get())) {
+            return null;
+        }
         return new PersonalDebt(debtor.get(), recipient.get(), dto.amount(), dto.reason());
     }
 }

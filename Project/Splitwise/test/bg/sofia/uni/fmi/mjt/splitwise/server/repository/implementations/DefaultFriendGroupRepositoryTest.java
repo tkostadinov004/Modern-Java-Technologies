@@ -34,16 +34,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DefaultFriendGroupRepositoryTest {
-    private static final DependencyContainer dependencyContainer = mock();
-    private static final User user1 = new User("user1", "asd", "Test", "Test1");
-    private static final User user2 = new User("user2", "asd", "Test", "Test1");
-    private static final User user3 = new User("user3", "asd", "Test", "Test1");
-    private static final User user4 = new User("user4", "asd", "Test", "Test1");
+    private static final DependencyContainer  DEPENDENCY_CONTAINER = mock();
+    private static final User USER_1 = new User("user1", "asd", "Test", "Test1");
+    private static final User USER_2 = new User("user2", "asd", "Test", "Test1");
+    private static final User USER_3 = new User("user3", "asd", "Test", "Test1");
+    private static final User USER_4 = new User("user4", "asd", "Test", "Test1");
 
     @BeforeAll
     public static void setUp() {
         NotificationsRepository notificationsRepository = mock();
-        when(dependencyContainer.get(NotificationsRepository.class))
+        when( DEPENDENCY_CONTAINER.get(NotificationsRepository.class))
                 .thenReturn(notificationsRepository);
 
         FriendGroupsCsvProcessor csvProcessor = mock();
@@ -51,25 +51,25 @@ public class DefaultFriendGroupRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(FriendGroupsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(FriendGroupsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
         UserRepository userRepository = mock();
-        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(user1));
-        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(user2));
-        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(user3));
-        when(userRepository.getUserByUsername("user4")).thenReturn(Optional.of(user4));
+        when(userRepository.getUserByUsername("user1")).thenReturn(Optional.of(USER_1));
+        when(userRepository.getUserByUsername("user2")).thenReturn(Optional.of(USER_2));
+        when(userRepository.getUserByUsername("user3")).thenReturn(Optional.of(USER_3));
+        when(userRepository.getUserByUsername("user4")).thenReturn(Optional.of(USER_4));
         when(userRepository.containsUser("user1")).thenReturn(true);
         when(userRepository.containsUser("user2")).thenReturn(true);
         when(userRepository.containsUser("user3")).thenReturn(true);
         when(userRepository.containsUser("user4")).thenReturn(true);
-        when(dependencyContainer.get(UserRepository.class))
+        when( DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
     }
 
     @Test
     public void testGetGroupsOfThrowsOnInvalidUsername() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.getGroupsOf(null),
                 "getGroupsOf() should throw on null username");
@@ -81,7 +81,7 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testGetGroupsOfThrowsOnNonexistentUser() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(NonExistentUserException.class, () -> friendGroupRepository.getGroupsOf( "asdasdasd"),
                 "getGroupsOf() should throw on non existing user");
@@ -89,12 +89,12 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testGetGroupsOfReturnsGroupsCorrectly() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
-        friendGroupRepository.createGroup("testGroup", Set.of(user1.username(), user2.username(), user3.username()));
-        friendGroupRepository.createGroup("testGroup1", Set.of(user1.username(), user2.username(), user4.username()));
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
+        friendGroupRepository.createGroup("testGroup", Set.of(USER_1.username(), USER_2.username(), USER_3.username()));
+        friendGroupRepository.createGroup("testGroup1", Set.of(USER_1.username(), USER_2.username(), USER_4.username()));
 
-        Set<FriendGroup> expected = Set.of(new FriendGroup("testGroup", Set.of(user1, user2, user3)),
-                new FriendGroup("testGroup1", Set.of(user1, user2, user4)));
+        Set<FriendGroup> expected = Set.of(new FriendGroup("testGroup", Set.of(USER_1, USER_2, USER_3)),
+                new FriendGroup("testGroup1", Set.of(USER_1, USER_2, USER_4)));
         Set<FriendGroup> actual = friendGroupRepository.getGroupsOf("user1");
 
         assertTrue(expected.size() == actual.size() &&
@@ -104,7 +104,7 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testGetGroupThrowsOnInvalidName() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.getGroup(null),
                 "getGroup() should throw on null group name");
@@ -116,7 +116,7 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testGetGroupReturnsEmptyNonExistentGroup() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         Optional<FriendGroup> group = friendGroupRepository.getGroup("asdasda");
         assertTrue(group.isEmpty(),
@@ -125,9 +125,9 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testGetGroupReturnsGroupCorrectly() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
-        friendGroupRepository.createGroup("testGroup", Set.of(user1.username(), user2.username(), user3.username()));
-        FriendGroup group = new FriendGroup("testGroup", Set.of(user1, user2, user3));
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
+        friendGroupRepository.createGroup("testGroup", Set.of(USER_1.username(), USER_2.username(), USER_3.username()));
+        FriendGroup group = new FriendGroup("testGroup", Set.of(USER_1, USER_2, USER_3));
 
         Optional<FriendGroup> foundGroup = friendGroupRepository.getGroup("testGroup");
         assertTrue(foundGroup.isPresent(),
@@ -138,7 +138,7 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testContainsGroupByNameThrowsOnInvalidName() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.containsGroupByName(null),
                 "containsGroupByName() should throw on null group name");
@@ -150,8 +150,8 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testContainsGroupByNameChecksCorrectly() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
-        friendGroupRepository.createGroup("testGroup", Set.of(user1.username(), user2.username(), user3.username()));
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
+        friendGroupRepository.createGroup("testGroup", Set.of(USER_1.username(), USER_2.username(), USER_3.username()));
 
         assertTrue(friendGroupRepository.containsGroupByName("testGroup"),
                 "containsGroupByName() should return true if the group is present in the repository");
@@ -161,19 +161,19 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testCreateGroupThrowsOnInvalidGroupName() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
-        assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup(null, Set.of(user1.username())),
+        assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup(null, Set.of(USER_1.username())),
                 "createGroup() should throw on null group name");
-        assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup("", Set.of(user1.username())),
+        assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup("", Set.of(USER_1.username())),
                 "createGroup() should throw on empty group name");
-        assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup("   ", Set.of(user1.username())),
+        assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup("   ", Set.of(USER_1.username())),
                 "createGroup() should throw on blank group name");
     }
 
     @Test
     public void testCreateGroupThrowsOnNullParticipantsSet() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup("asdasd", null),
                 "createGroup() should throw on null participants set");
@@ -181,7 +181,7 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testCreateGroupThrowsOnEmptyParticipantsSet() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> friendGroupRepository.createGroup("asdasd", Set.of()),
                 "createGroup() should throw on empty participants set");
@@ -189,18 +189,18 @@ public class DefaultFriendGroupRepositoryTest {
 
     @Test
     public void testCreateGroupThrowsOnAlreadyExistingGroup() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
-        friendGroupRepository.createGroup("testGroup", Set.of(user1.username(), user2.username(), user3.username()));
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
+        friendGroupRepository.createGroup("testGroup", Set.of(USER_1.username(), USER_2.username(), USER_3.username()));
 
-        assertThrows(GroupAlreadyExistsException.class, () -> friendGroupRepository.createGroup("testGroup", Set.of(user1.username(), user2.username(), user4.username())),
+        assertThrows(GroupAlreadyExistsException.class, () -> friendGroupRepository.createGroup("testGroup", Set.of(USER_1.username(), USER_2.username(), USER_4.username())),
                 "createGroup() should throw on already existing group");
     }
 
     @Test
     public void testCreateGroupThrowsIfThereAreNonexistentMembers() {
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
 
-        assertThrows(NonExistentUserException.class, () -> friendGroupRepository.createGroup("testGroup", Set.of(user1.username(), "user2313")),
+        assertThrows(NonExistentUserException.class, () -> friendGroupRepository.createGroup("testGroup", Set.of(USER_1.username(), "user2313")),
                 "createGroup() should throw when there are nonexistent participants");
     }
 
@@ -211,14 +211,14 @@ public class DefaultFriendGroupRepositoryTest {
                 .thenReturn(Set.of());
         doAnswer((Answer<Void>) _ -> null)
                 .when(csvProcessor).writeToFile(any());
-        when(dependencyContainer.get(FriendGroupsCsvProcessor.class))
+        when( DEPENDENCY_CONTAINER.get(FriendGroupsCsvProcessor.class))
                 .thenReturn(csvProcessor);
 
-        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository(dependencyContainer);
-        FriendGroupDTO groupDTO = new FriendGroupDTO("testGroup", Set.of(user1.username(), user2.username(), user3.username()));
+        FriendGroupRepository friendGroupRepository = new DefaultFriendGroupRepository( DEPENDENCY_CONTAINER);
+        FriendGroupDTO groupDTO = new FriendGroupDTO("testGroup", Set.of(USER_1.username(), USER_2.username(), USER_3.username()));
         friendGroupRepository.createGroup(groupDTO.name(), groupDTO.participantsUsernames());
 
-        FriendGroup expected = new FriendGroup("testGroup", Set.of(user1, user2, user3));
+        FriendGroup expected = new FriendGroup("testGroup", Set.of(USER_1, USER_2, USER_3));
         Optional<FriendGroup> actual = friendGroupRepository.getGroup(expected.name());
         assertTrue(actual.isPresent(),
                 "A group should be present in the repository after being added");

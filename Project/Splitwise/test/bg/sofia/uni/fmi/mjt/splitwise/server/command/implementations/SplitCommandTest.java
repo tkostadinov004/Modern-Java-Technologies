@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SplitCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -54,7 +54,7 @@ public class SplitCommandTest {
 
         Command command =
                 new SplitCommand(authenticator, personalExpensesRepository, new String[]{"10", "user", "reason"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(personalExpensesRepository, times(0))
@@ -70,7 +70,7 @@ public class SplitCommandTest {
 
         Command command =
                 new SplitCommand(authenticator, personalExpensesRepository, new String[]{"-asdasd10", "user", "reason"});
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when amount is invalid");
 
         verify(personalExpensesRepository, times(0))
@@ -92,7 +92,7 @@ public class SplitCommandTest {
         Command command =
                 new SplitCommand(authenticator, personalExpensesRepository, new String[]{"10", "user", "reason"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(personalExpensesRepository, times(1))
@@ -113,7 +113,7 @@ public class SplitCommandTest {
         Command command =
                 new SplitCommand(authenticator, personalExpensesRepository, new String[]{"10", "user", "reason"});
         assertThrows(IllegalArgumentException.class, () -> personalExpensesRepository.addExpense("user", "testuser", 10, "reason", LocalDateTime.now()));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be handled if there are errors");
     }
 

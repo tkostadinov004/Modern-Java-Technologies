@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ExitChatCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -50,7 +50,7 @@ public class ExitChatCommandTest {
 
         Command command =
                 new ExitChatCommand(authenticator, chatToken, new String[0]);
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(chatToken, times(0))
@@ -69,7 +69,7 @@ public class ExitChatCommandTest {
 
         Command command =
                 new ExitChatCommand(authenticator, chatToken, new String[0]);
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not in chat");
 
         verify(chatToken, times(0))
@@ -92,7 +92,7 @@ public class ExitChatCommandTest {
         Command command =
                 new ExitChatCommand(authenticator, chatToken, new String[0]);
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated and in chat");
 
         verify(chatToken, times(1))
@@ -115,7 +115,7 @@ public class ExitChatCommandTest {
         Command command =
                 new ExitChatCommand(authenticator, chatToken, new String[0]);
         assertThrows(ChatException.class, () -> chatToken.leaveChat());
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there is a chat error");
     }
 

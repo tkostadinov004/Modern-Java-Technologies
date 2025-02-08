@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class LogoutCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -52,7 +52,7 @@ public class LogoutCommandTest {
         Command command =
                 new LogoutCommand(authenticator, new String[0]);
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
     }
 
@@ -65,7 +65,7 @@ public class LogoutCommandTest {
         Command command =
                 new LogoutCommand(authenticator, new String[0]);
         assertThrows(NotAuthenticatedException.class, () -> authenticator.logout());
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there are any errors");
     }
 

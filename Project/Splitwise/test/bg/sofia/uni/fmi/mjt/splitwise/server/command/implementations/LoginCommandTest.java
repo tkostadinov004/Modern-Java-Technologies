@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class LoginCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -59,7 +59,7 @@ public class LoginCommandTest {
         Command command =
                 new LoginCommand(authenticator, notificationsRepository, new String[]{"testuser", "testpass"});
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(notificationsRepository, times(1))
@@ -80,7 +80,7 @@ public class LoginCommandTest {
         Command command =
                 new LoginCommand(authenticator, notificationsRepository, new String[]{"testuser", "testpass"});
         assertThrows(AlreadyAuthenticatedException.class, () -> authenticator.authenticate("testuser", "testpass"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there are any errors");
     }
 

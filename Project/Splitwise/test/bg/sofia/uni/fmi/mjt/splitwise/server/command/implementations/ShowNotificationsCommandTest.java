@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ShowNotificationsCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -49,7 +49,7 @@ public class ShowNotificationsCommandTest {
 
         Command command =
                 new ShowNotificationsCommand(authenticator, notificationsRepository, new String[0]);
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(notificationsRepository, times(0))
@@ -70,7 +70,7 @@ public class ShowNotificationsCommandTest {
         Command command =
                 new ShowNotificationsCommand(authenticator, notificationsRepository, new String[0]);
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(notificationsRepository, times(1))
@@ -91,7 +91,7 @@ public class ShowNotificationsCommandTest {
         Command command =
                 new ShowNotificationsCommand(authenticator, notificationsRepository, new String[0]);
         assertThrows(NonExistentUserException.class, () -> notificationsRepository.getNotificationsForUser(authenticator.getAuthenticatedUser().username()));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "An exception should be thrown if there is an invalid user");
     }
 

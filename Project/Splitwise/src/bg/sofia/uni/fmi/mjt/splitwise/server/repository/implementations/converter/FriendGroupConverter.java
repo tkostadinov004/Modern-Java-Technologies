@@ -31,6 +31,9 @@ public class FriendGroupConverter
                         }
                         return user.get();
                     }).collect(Collectors.toSet());
+            if (participants.isEmpty()) {
+                return null;
+            }
             return new FriendGroup(dto.name(), participants);
         } catch (IllegalArgumentException e) {
             return null;

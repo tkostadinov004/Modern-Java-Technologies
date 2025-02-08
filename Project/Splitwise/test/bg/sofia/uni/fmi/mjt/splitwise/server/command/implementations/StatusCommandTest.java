@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StatusCommandTest {
-    private static final PrintWriter printWriter = mock();
+    private static final PrintWriter PRINT_WRITER = mock();
 
     @Test
     public void testDoesNotWorkWithInsufficientArguments() {
@@ -53,7 +53,7 @@ public class StatusCommandTest {
 
         Command command =
                 new StatusCommand(authenticator, personalDebtsRepository, groupDebtsRepository, new String[0]);
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Command should not work when user is not authenticated");
 
         verify(personalDebtsRepository, times(0))
@@ -85,7 +85,7 @@ public class StatusCommandTest {
         Command command =
                 new StatusCommand(authenticator, personalDebtsRepository, groupDebtsRepository, new String[0]);
 
-        assertTrue(command.execute(printWriter),
+        assertTrue(command.execute(PRINT_WRITER),
                 "Command should work when user is authenticated");
 
         verify(personalDebtsRepository, times(1))
@@ -109,7 +109,7 @@ public class StatusCommandTest {
         Command command =
                 new StatusCommand(authenticator, personalDebtsRepository, groupDebtsRepository, new String[0]);
         assertThrows(IllegalArgumentException.class, () -> personalDebtsRepository.getDebtsOf("testuser"));
-        assertFalse(command.execute(printWriter),
+        assertFalse(command.execute(PRINT_WRITER),
                 "Exceptions should be handled");
     }
 

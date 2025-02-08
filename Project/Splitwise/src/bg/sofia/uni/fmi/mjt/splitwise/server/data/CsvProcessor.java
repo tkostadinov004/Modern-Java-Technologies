@@ -36,9 +36,8 @@ public abstract class CsvProcessor<T> {
         }
 
         try (reader) {
-            List<String[]> a = reader
-                    .readAll();
-            data = a
+            data = reader
+                    .readAll()
                     .stream()
                     .map(mappingFunction)
                     .filter(Objects::nonNull)
