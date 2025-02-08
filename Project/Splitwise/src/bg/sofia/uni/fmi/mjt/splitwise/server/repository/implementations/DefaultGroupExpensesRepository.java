@@ -15,6 +15,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentFriendGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.UserNotInGroupException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.GroupExpensesConverter;
 
@@ -107,13 +108,13 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
         }
     }
 
-    private void validateArguments(String debtorUsername,
+    private void validateArguments(String payerUsername,
                                    String groupName,
                                    double amount,
                                    String reason,
                                    LocalDateTime timestamp) {
-        if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
-            throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
+        if (payerUsername == null || payerUsername.isEmpty() || payerUsername.isBlank()) {
+            throw new IllegalArgumentException("Payer username cannot be null, blank or empty!");
         }
         if (groupName == null || groupName.isEmpty() || groupName.isBlank()) {
             throw new IllegalArgumentException("Group name cannot be null, blank or empty!");
@@ -145,6 +146,11 @@ public class DefaultGroupExpensesRepository implements GroupExpensesRepository {
         Optional<FriendGroup> group = friendGroupRepository.getGroup(groupName);
         if (group.isEmpty()) {
             throw new NonExistentFriendGroupException("Group with name %s does not exist!".formatted(payerUsername));
+        }
+
+        if (!group.get().participants().contains(payer.get())) {
+            throw new UserNotInGroupException("User %s is not in group %s!"
+                    .formatted(payerUsername, groupName));
         }
 
         addExpense(group.get(), payer.get(), amount, reason, timestamp);

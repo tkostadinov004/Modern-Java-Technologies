@@ -69,7 +69,7 @@ public class SplitwiseServer {
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-            SimpleDateFormat format = new SimpleDateFormat("M-d_HHmmss");
+            SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-dd_HH-mm-ss");
             return new FileHandler("logs/log"
                     + format.format(Calendar.getInstance().getTime()) + ".log");
         } catch (IOException e) {

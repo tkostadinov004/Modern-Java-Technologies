@@ -10,8 +10,10 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.models.dto.PersonalExpenseDTO;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalExpensesRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NotFriendsException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.DataConverter;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.implementations.converter.PersonalExpensesConverter;
 
@@ -35,6 +37,7 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
     private final UserRepository userRepository;
     private final PersonalDebtsRepository personalDebtsRepository;
     private final NotificationsRepository notificationsRepository;
+    private final UserFriendsRepository friendsRepository;
     private final Map<User, Set<PersonalExpense>> expensesMap;
 
     public DefaultPersonalExpensesRepository(DependencyContainer dependencyContainer) {
@@ -43,6 +46,7 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
         this.userRepository = dependencyContainer.get(UserRepository.class);
         this.personalDebtsRepository = dependencyContainer.get(PersonalDebtsRepository.class);
         this.notificationsRepository = dependencyContainer.get(NotificationsRepository.class);
+        this.friendsRepository = dependencyContainer.get(UserFriendsRepository.class);
 
         DataConverter<Map<User, Set<PersonalExpense>>, PersonalExpense, PersonalExpenseDTO> converter =
                 new PersonalExpensesConverter(csvProcessor, userRepository);
@@ -71,13 +75,13 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
         }
     }
 
-    private void validateArguments(String debtorUsername,
+    private void validateArguments(String payerUsername,
                                    String participantUsername,
                                    double amount,
                                    String reason,
                                    LocalDateTime timestamp) {
-        if (debtorUsername == null || debtorUsername.isEmpty() || debtorUsername.isBlank()) {
-            throw new IllegalArgumentException("Debtor username cannot be null, blank or empty!");
+        if (payerUsername == null || payerUsername.isEmpty() || payerUsername.isBlank()) {
+            throw new IllegalArgumentException("Payer username cannot be null, blank or empty!");
         }
         if (participantUsername == null || participantUsername.isEmpty() || participantUsername.isBlank()) {
             throw new IllegalArgumentException("Participant username cannot be null, blank or empty!");
@@ -90,6 +94,9 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
         }
         if (timestamp == null) {
             throw new IllegalArgumentException("Timestamp cannot be null!");
+        }
+        if (payerUsername.equals(participantUsername)) {
+            throw new IllegalArgumentException("Debtor and participant cannot be the same person!");
         }
     }
 
@@ -108,6 +115,10 @@ public class DefaultPersonalExpensesRepository implements PersonalExpensesReposi
         Optional<User> participant = userRepository.getUserByUsername(participantUsername);
         if (participant.isEmpty()) {
             throw new NonExistentUserException("User with username %s does not exist!".formatted(participantUsername));
+        }
+        if (!friendsRepository.areFriends(payerUsername, participantUsername)) {
+            throw new NotFriendsException("Users %s and %s are not friends!"
+                    .formatted(payerUsername, participantUsername));
         }
 
         expensesMap.putIfAbsent(payer.get(), Collections.synchronizedSet(new HashSet<>()));

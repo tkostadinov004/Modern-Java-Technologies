@@ -11,8 +11,10 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.FriendGroupRep
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.GroupDebtsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.PersonalDebtsRepository;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserFriendsRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NotFriendsException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -74,6 +76,12 @@ public class DefaultPersonalExpensesRepositoryTest {
         when(DEPENDENCY_CONTAINER.get(UserRepository.class))
                 .thenReturn(userRepository);
 
+        UserFriendsRepository userFriendsRepository = mock();
+        when(userFriendsRepository.areFriends("user1", "user2")).thenReturn(true);
+        when(userFriendsRepository.areFriends("user1", "user3")).thenReturn(true);
+        when(DEPENDENCY_CONTAINER.get(UserFriendsRepository.class))
+                .thenReturn(userFriendsRepository);
+
         PersonalDebtsRepository personalDebtsRepository = mock();
         when(DEPENDENCY_CONTAINER.get(PersonalDebtsRepository.class))
                 .thenReturn(personalDebtsRepository);
@@ -84,11 +92,11 @@ public class DefaultPersonalExpensesRepositoryTest {
         PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.getExpensesOf(null),
-                "getExpensesOf() should throw on null USER_name");
+                "getExpensesOf() should throw on null username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.getExpensesOf(""),
-                "getExpensesOf() should throw on empty USER_name");
+                "getExpensesOf() should throw on empty username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.getExpensesOf("   "),
-                "getExpensesOf() should throw on blank USER_name");
+                "getExpensesOf() should throw on blank username");
     }
 
     @Test
@@ -128,11 +136,11 @@ public class DefaultPersonalExpensesRepositoryTest {
         PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense(null, "user2", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on null payer USER_name");
+                "addExpense() should throw on null payer username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("", "user2", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on empty payer USER_name");
+                "addExpense() should throw on empty payer username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("   ", "user2", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on blank payer USER_name");
+                "addExpense() should throw on blank payer username");
     }
 
     @Test
@@ -140,11 +148,19 @@ public class DefaultPersonalExpensesRepositoryTest {
         PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense( "user2",null, 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on null debtor USER_name");
+                "addExpense() should throw on null debtor username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense("user2", "", 100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on empty debtor USER_name");
+                "addExpense() should throw on empty debtor username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense( "user2", "   ",100, "reason", LocalDateTime.now()),
-                "addExpense() should throw on blank debtor USER_name");
+                "addExpense() should throw on blank debtor username");
+    }
+    
+    @Test
+    public void testAddExpenseThrowsWhenDebtorAndParticipantAreTheSame() {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
+
+        assertThrows(IllegalArgumentException.class, () -> expensesRepository.addExpense( "user2","user2", 100, "reason", LocalDateTime.now()),
+                "addExpense() should throw when debtor and participant are the same");
     }
 
     @Test
@@ -200,15 +216,23 @@ public class DefaultPersonalExpensesRepositoryTest {
     }
 
     @Test
+    public void testAddExpenseOfThrowsIfUsersAreNotFriends() {
+        PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
+
+        assertThrows(NotFriendsException.class, () -> expensesRepository.addExpense( "user2", "user3", 100, "reason", LocalDateTime.now()),
+                "addExpense() should throw when debtor and participant are not friends");
+    }
+
+    @Test
     public void testExportRecentThrowsOnInvalidUsername() {
         PersonalExpensesRepository expensesRepository = new DefaultPersonalExpensesRepository(DEPENDENCY_CONTAINER);
 
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( null,50, new BufferedWriter(new StringWriter())),
-                "exportRecent() should throw on null USER_name");
+                "exportRecent() should throw on null username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent("", 50,   new BufferedWriter(new StringWriter())),
-                "exportRecent() should throw on empty USER_name");
+                "exportRecent() should throw on empty username");
         assertThrows(IllegalArgumentException.class, () -> expensesRepository.exportRecent( "   ", 50,  new BufferedWriter(new StringWriter())),
-                "exportRecent() should throw on blank USER_name");
+                "exportRecent() should throw on blank username");
     }
 
     @Test

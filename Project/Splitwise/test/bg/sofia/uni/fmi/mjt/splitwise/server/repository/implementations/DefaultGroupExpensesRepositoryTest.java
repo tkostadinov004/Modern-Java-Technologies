@@ -12,6 +12,7 @@ import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.NotificationsR
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.contracts.UserRepository;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentUserException;
 import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.NonExistentFriendGroupException;
+import bg.sofia.uni.fmi.mjt.splitwise.server.repository.exception.UserNotInGroupException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
@@ -205,6 +206,14 @@ public class DefaultGroupExpensesRepositoryTest {
 
         assertThrows(NonExistentFriendGroupException.class, () -> expensesRepository.addExpense( "user2", "adsasdasdas", 100, "reason", LocalDateTime.now()),
                 "addExpense() should throw on non existing group");
+    }
+
+    @Test
+    public void testAddExpenseOfThrowsWhenUserIsNotInGroup() {
+        GroupExpensesRepository expensesRepository = new DefaultGroupExpensesRepository( DEPENDENCY_CONTAINER);
+
+        assertThrows(UserNotInGroupException.class, () -> expensesRepository.addExpense( "user4", "testGroup", 100, "reason", LocalDateTime.now()),
+                "addExpense() should throw when user is not in group");
     }
 
     @Test
