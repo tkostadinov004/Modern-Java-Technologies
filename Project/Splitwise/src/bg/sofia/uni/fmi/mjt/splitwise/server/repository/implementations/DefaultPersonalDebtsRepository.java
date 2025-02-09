@@ -76,25 +76,23 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
 
     private void lowerDebtBurden(PersonalDebt debt, double amount, boolean isReversed) {
         synchronized (personalDebts) {
+            personalDebts.remove(debt);
             double newAmount = debt.amount() - amount;
-
             PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
                     debt.amount(), debt.reason());
 
             if (newAmount <= 0) {
-                personalDebts.remove(debt);
                 csvProcessor.remove(crudDTO);
                 if (isReversed && newAmount < 0) {
                     addDebt(debt.recipient(), debt.debtor(), Math.abs(newAmount), debt.reason());
                 }
             } else {
-                debt.updateAmount(newAmount);
+                personalDebts.add(new PersonalDebt(debt.debtor(), debt.recipient(), newAmount, debt.reason()));
 
                 PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
                         debt.recipient().username(),
                         newAmount,
                         debt.reason());
-
                 csvProcessor.modify(crudDTO, updatedDebtDTO);
             }
             notificationsRepository.addNotificationForUser(debt.debtor().username(),
@@ -151,7 +149,8 @@ public class DefaultPersonalDebtsRepository implements PersonalDebtsRepository {
             PersonalDebtDTO crudDTO = new PersonalDebtDTO(debt.debtor().username(), debt.recipient().username(),
                     debt.amount(), debt.reason());
 
-            debt.updateAmount(newAmount);
+            personalDebts.remove(debt);
+            personalDebts.add(new PersonalDebt(debt.debtor(), debt.recipient(), newAmount, debt.reason()));
 
             PersonalDebtDTO updatedDebtDTO = new PersonalDebtDTO(debt.debtor().username(),
                     debt.recipient().username(),

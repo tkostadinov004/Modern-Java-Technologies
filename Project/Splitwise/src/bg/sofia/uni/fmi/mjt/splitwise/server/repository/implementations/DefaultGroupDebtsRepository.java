@@ -104,19 +104,19 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
 
     private void lowerDebtBurden(GroupDebt debt, FriendGroup group, double amount, boolean isReversed) {
         synchronized (groupDebts) {
+            groupDebts.get(group).remove(debt);
             double newAmount = debt.amount() - amount;
-
             GroupDebtDTO crudDTO = new GroupDebtDTO(debt.debtor().username(),
                     debt.recipient().username(), group.name(), debt.amount(), debt.reason());
 
             if (newAmount <= 0) {
-                groupDebts.get(group).remove(debt);
                 csvProcessor.remove(crudDTO);
                 if (isReversed && newAmount < 0) {
                     addDebt(debt.recipient(), debt.debtor(), debt.group(), Math.abs(newAmount), debt.reason());
                 }
             } else {
-                debt.updateAmount(newAmount);
+                groupDebts.get(group).add(new GroupDebt(debt.debtor(), debt.recipient(),
+                        group, newAmount, debt.reason()));
 
                 GroupDebtDTO updatedDebtDTO = new GroupDebtDTO(debt.debtor().username(),
                         debt.recipient().username(),
@@ -193,11 +193,14 @@ public class DefaultGroupDebtsRepository implements GroupDebtsRepository {
 
     private void increaseDebtBurden(GroupDebt debt, FriendGroup group, double amount) {
         synchronized (groupDebts) {
+            groupDebts.get(group).remove(debt);
+
             double newAmount = debt.amount() + amount;
             GroupDebtDTO crudDTO = new GroupDebtDTO(debt.debtor().username(),
                     debt.recipient().username(), group.name(), debt.amount(), debt.reason());
 
-            debt.updateAmount(newAmount);
+            groupDebts.get(group).add(new GroupDebt(debt.debtor(), debt.recipient(),
+                    group, newAmount, debt.reason()));
 
             GroupDebtDTO updatedDebtDTO = new GroupDebtDTO(debt.debtor().username(),
                     debt.recipient().username(),
