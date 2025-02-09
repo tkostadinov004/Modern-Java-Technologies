@@ -56,11 +56,9 @@ public class SplitwiseServer {
     private static final int PORT = 12345;
     private static final int MAX_CLIENTS = 1024;
     private final DependencyContainer dependencyContainer;
-    private final ExecutorService executorService;
 
     public SplitwiseServer() {
         dependencyContainer = new DependencyContainer();
-        executorService = Executors.newFixedThreadPool(MAX_CLIENTS);
     }
 
     private FileHandler getLoggerHandler() {
@@ -69,7 +67,7 @@ public class SplitwiseServer {
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-            SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-dd_HH-mm-ss");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
             return new FileHandler("logs/log"
                     + format.format(Calendar.getInstance().getTime()) + ".log");
         } catch (IOException e) {
@@ -140,33 +138,40 @@ public class SplitwiseServer {
         dependencyContainer.register(GroupExpensesRepository.class, groupExpensesRepository);
     }
 
+    private void configure(ServerSocket serverSocket) throws IOException {
+        handleFiles();
+        registerCSVProcessors();
+        registerRepositories();
+        dependencyContainer.register(PasswordHasher.class, new PasswordHasher());
+        InetSocketAddress address = new InetSocketAddress(serverSocket.getInetAddress(), PORT);
+        dependencyContainer
+                .register(ChatRepository.class, new DefaultChatRepository(dependencyContainer, address));
+    }
+
     public void start() {
         Logger logger = Logger.getLogger(SplitwiseServer.class.getName());
         logger.addHandler(getLoggerHandler());
         dependencyContainer.register(Logger.class, logger);
 
-        while (true) {
-            try (ServerSocket serverSocket = new ServerSocket()) {
-                serverSocket.bind(new InetSocketAddress(HOST, PORT));
-                handleFiles();
-                registerCSVProcessors();
-                registerRepositories();
-                dependencyContainer.register(PasswordHasher.class, new PasswordHasher());
-                InetSocketAddress address = new InetSocketAddress(serverSocket.getInetAddress(), PORT);
-                dependencyContainer
-                        .register(ChatRepository.class, new DefaultChatRepository(dependencyContainer, address));
+        try (ExecutorService executorService = Executors.newFixedThreadPool(MAX_CLIENTS)) {
+            while (true) {
+                try (ServerSocket serverSocket = new ServerSocket()) {
+                    serverSocket.bind(new InetSocketAddress(HOST, PORT));
+                    configure(serverSocket);
 
-                while (true) {
-                    Socket client = serverSocket.accept();
-                    Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, client);
-                    ChatToken chatToken = new DefaultChatToken(dependencyContainer, authenticator);
-                    CommandFactory commandFactory = new CommandFactory(dependencyContainer, authenticator, chatToken);
-                    executorService.execute(() ->
-                            new ClientRequestHandler(dependencyContainer, client, commandFactory).run());
+                    while (true) {
+                        Socket client = serverSocket.accept();
+                        Authenticator authenticator = new DefaultAuthenticator(dependencyContainer, client);
+                        ChatToken chatToken = new DefaultChatToken(dependencyContainer, authenticator);
+                        CommandFactory commandFactory =
+                                new CommandFactory(dependencyContainer, authenticator, chatToken);
+                        executorService.execute(() ->
+                                new ClientRequestHandler(dependencyContainer, client, commandFactory).run());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    logger.severe(e.getMessage());
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-                logger.severe(e.getMessage());
             }
         }
     }
