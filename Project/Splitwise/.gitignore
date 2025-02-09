@@ -1,6 +1,4 @@
 *.csv
-logs/
-data/
 
 ### IntelliJ IDEA ###
 out/
